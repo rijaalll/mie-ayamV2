@@ -1,7 +1,17 @@
+import AuthPage from "@/src/section/auth"
+
 export const metadata = {
-    title: "Mie Hoog",
-    description: "order Mie Hoog disini",
+    title: "Login",
+    description: "Auth Page",
     icons: {
-      icon: "/images/web-logo.JPG",
-    },
-};
+        icon: "/images/web-logo-bg.JPG",
+    }
+}
+
+export default function Auth() {
+    return (
+        <div>
+            <AuthPage />
+        </div>
+    )
+}

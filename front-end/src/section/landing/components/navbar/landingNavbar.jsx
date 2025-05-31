@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { useLogin } from "@/src/utils/authContext";
 
 export default function LandingNavbar() {
@@ -9,10 +11,10 @@ export default function LandingNavbar() {
                 <div className="w-auto ">
                     <p className="text-2xl">Mie Hoog</p>
                 </div>
-                <div className="w-auto flex flex-row gap-2">
+                <Link href="/auth" className="w-auto flex flex-row gap-2">
                     <span className="bi-person-circle text-lg text-black/60"></span>
                     <p className="text-lg">{login ? name : "login"}</p>
-                </div>  
+                </Link>  
             </div>
         </div>
     );

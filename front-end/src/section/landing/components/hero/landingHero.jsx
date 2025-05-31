@@ -1,31 +1,13 @@
-import { useLogin } from "@/src/utils/authContext";
+import { useState } from "react";
 import Image from "next/image";
+import { useLogin } from "@/src/utils/authContext";
+import { EmptyModal } from "@/src/components/modal";
+import { InfoElement } from "./info";
 
 import webIcon from "@/public/images/web-logo.png";
-import reactLogo from "@/public/logo/reactLogo.png";
-import nextLogo from "@/public/logo/nextLogo.png";
-import firebaseLogo from "@/public/logo/firebaseLogo.png";
-import tailwindLogo from "@/public/logo/tailwindLogo.png";
-
-const logoList = [
-    {logoName: 'react js', logoSrc: reactLogo},
-    {logoName: 'next js', logoSrc: nextLogo},
-    {logoName: 'firebase', logoSrc: firebaseLogo},
-    {logoName: 'tailwind css', logoSrc: tailwindLogo},
-]
-
-export const LogoElement = ({logoName, logoSrc}) => {
-    return (
-        <div className="flex fle-row items-center gap-1">
-            <div className="w-full max-w-[20px]">
-                <Image src={logoSrc} alt={logoName} />
-            </div>
-            <p className="text-sm">{logoName}</p>
-        </div>
-    )
-}
 
 export default function LandingHero() {
+    const [ isOpen, setIsOpen ] = useState(false);
     const { login, id, username, name, setLoginData, logout } = useLogin();
 
     const handleLogin = () => {
@@ -57,16 +39,14 @@ export default function LandingHero() {
 
                 </div>
             </div>
-            <div className="w-full text-center mb-1">
-                <div className="w-auto flex flex-col text-center">
-                    <p className="text-lg">using :</p>
-                    <div className="flex flex-row gap-4 justify-center">
-                        {logoList.map((logo, index) => (
-                            <LogoElement key={index} logoName={logo.logoName} logoSrc={logo.logoSrc} />
-                        ))}
-                    </div>
-                </div>
+            <div className="w-full text-center mb-2">
+                <button onClick={() => setIsOpen(true)}>
+                    <p className="text-blue-500 font-bold">Info</p>
+                </button>
             </div>
+            {isOpen && (
+                <EmptyModal children={<InfoElement />} setIsOpen={setIsOpen} />
+            )}
         </div>
     );
 }

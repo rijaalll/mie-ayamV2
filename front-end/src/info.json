@@ -1,0 +1,19 @@
+{
+    "website_info": {
+        "name": "Mie Hoog",
+        "version": "1.0.0",
+        "description": "webapp untuk pemesanan mie"
+    },
+    "developer_info": [
+        {
+            "name": "rizal",
+            "instagram": "https://www.instagram.com/ahmdrizaalll/",
+            "github": "https://github.com/rijaalll"
+        },
+        {
+            "name": "fanza (beban)",
+            "instagram": "https://www.instagram.com/fnzadht_/",
+            "github": "https://github.com/fnzadhitya"
+        }
+    ]
+}
