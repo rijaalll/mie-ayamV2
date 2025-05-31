@@ -9,6 +9,7 @@ const defaultLoginState = {
   username: 'guest',
   name: 'guest',
   password: '',
+  table: '',
 };
 
 const LoginContext = createContext({

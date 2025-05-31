@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Image from "next/image";
-import { useLogin } from "@/src/utils/authContext";
 import { EmptyModal } from "@/src/components/modal";
 import { InfoElement } from "./info";
 
@@ -8,17 +7,6 @@ import webIcon from "@/public/images/web-logo.png";
 
 export default function LandingHero() {
     const [ isOpen, setIsOpen ] = useState(false);
-    const { login, id, username, name, setLoginData, logout } = useLogin();
-
-    const handleLogin = () => {
-        setLoginData({
-            login: true,
-            username: 'putri123',
-            name: 'Putri Ayu',
-            password: '***',
-            setLoginData,
-        })
-    };
 
     return (
         <div className="w-full h-[100dvh] flex flex-col">

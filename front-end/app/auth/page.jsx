@@ -8,7 +8,7 @@ export const metadata = {
     }
 }
 
-export default function Auth() {
+export default function AuthApp() {
     return (
         <div>
             <AuthPage />
