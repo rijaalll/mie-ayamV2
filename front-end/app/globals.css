@@ -3,3 +3,7 @@
 button {
     @apply cursor-pointer
 }
+
+* {
+    @apply transition-all duration-300
+}

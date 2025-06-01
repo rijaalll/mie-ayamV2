@@ -1,6 +1,10 @@
 const express = require('express');
 const app = express();
+const fileUpload = require('express-fileupload');
 const bodyParser = require('body-parser');
+
+app.use(fileUpload()); // untuk parsing file
+app.use(express.urlencoded({ extended: true }));
 
 require('dotenv').config();
 const port = process.env.API_PORT || 3001;

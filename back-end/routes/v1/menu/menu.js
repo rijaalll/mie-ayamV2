@@ -1,69 +1,74 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
 const { db } = require('../../../utils/firebase');
+const axios = require('axios');
+const FormData = require('form-data');
 
-const uploadDir = path.join(__dirname, '../../../assets/uploads/images');
-fs.mkdirSync(uploadDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    const randomName = crypto.randomBytes(16).toString('hex');
-    cb(null, `${randomName}${ext}`);
-  }
-});
-
-const upload = multer({ storage });
-
-// Helper to generate menu_id
+// Generate unique menu_id
 const getNextMenuId = async () => {
   const menuRef = db.ref('mie-hoog/menu');
   const snapshot = await menuRef.once('value');
 
   let maxNumber = 0;
-  snapshot.forEach(child => {
-    const id = child.val().menu_id;
-    if (id && id.startsWith('menu_')) {
-      const num = parseInt(id.replace('menu_', ''), 10);
-      if (num > maxNumber) maxNumber = num;
-    }
+  snapshot.forEach(categorySnap => {
+    categorySnap.forEach(child => {
+      const id = child.val().menu_id;
+      if (id && id.startsWith('menu_')) {
+        const num = parseInt(id.replace('menu_', ''), 10);
+        if (num > maxNumber) maxNumber = num;
+      }
+    });
   });
 
   const nextNumber = (maxNumber + 1).toString().padStart(3, '0');
   return `menu_${nextNumber}`;
 };
 
-// POST /add with image upload
-router.post('/add', upload.single('file'), async (req, res) => {
-  try {
-    const { menu_name, menu_price, menu_des, user_id } = req.body;
-    const file = req.file;
+// Upload image to external server
+const uploadImageToExternal = async (file) => {
+  const form = new FormData();
+  form.append('images', file.data, file.name);
 
-    if (!menu_name || !menu_price || !menu_des || !file || !user_id) {
-      return res.status(400).json({ message: 'All fields including image file and user_id are required' });
+  const response = await axios.post('http://image.rpnza.my.id/upload', form, {
+    headers: form.getHeaders(),
+  });
+
+  return response.data.filename;
+};
+
+// POST /add
+router.post('/add', async (req, res) => {
+  try {
+    const { menu_name, menu_price, menu_des, user_id, category } = req.body;
+    const file = req.files?.file;
+
+    if (!menu_name || !menu_price || !menu_des || !file || !user_id || !category) {
+      return res.status(400).json({ message: 'All fields including image file, user_id, and category are required' });
     }
 
-    // Cek admin
+    // Check admin user
     const userSnap = await db.ref(`mie-hoog/user/${user_id}`).once('value');
     const userData = userSnap.val();
     if (!userData || userData.level !== 'admin') {
       return res.status(403).json({ message: 'Access denied. Admin only.' });
     }
 
-    if (!menu_name || !menu_price || !menu_des || !file) {
-      return res.status(400).json({ message: 'All fields including image file are required' });
+    // Validate category
+    const categorySnap = await db.ref('mie-hoog/category').once('value');
+    const categories = categorySnap.val();
+    const isValidCategory = Object.values(categories || {}).some(cat => cat.name === category);
+
+    if (!isValidCategory) {
+      return res.status(400).json({ message: 'Invalid category' });
     }
 
-    const imageUrl = `http://127.0.0.1:3001/api/v1/image/${file.filename}`;
+    // Upload image
+    const uploadedFileName = await uploadImageToExternal(file);
+    const imageUrl = `https://image.rpnza.my.id/get/${uploadedFileName}`;
+
+    // Generate menu ID
     const menu_id = await getNextMenuId();
-    const menuRef = db.ref('mie-hoog/menu');
+    const menuRef = db.ref(`mie-hoog/menu/${category}`);
     const newMenuRef = menuRef.push();
 
     const newMenu = {
@@ -73,12 +78,13 @@ router.post('/add', upload.single('file'), async (req, res) => {
       menu_price,
       menu_des,
       menu_img: imageUrl,
+      category,
       createdAt: Date.now()
     };
 
     await newMenuRef.set(newMenu);
-
     res.status(201).json({ message: 'Menu added successfully', menu: newMenu });
+
   } catch (error) {
     console.error('Error adding menu with image:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -92,14 +98,13 @@ router.get('/all', async (req, res) => {
     const snapshot = await menuRef.once('value');
 
     const all_menu = [];
-    snapshot.forEach(child => {
-      all_menu.push(child.val());
+    snapshot.forEach(categorySnap => {
+      categorySnap.forEach(menuSnap => {
+        all_menu.push(menuSnap.val());
+      });
     });
 
-    res.status(200).json({
-      status: "OK",
-      all_menu
-    });
+    res.status(200).json({ status: "OK", all_menu });
   } catch (error) {
     console.error('Error fetching all menus:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -111,18 +116,24 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const menuRef = db.ref('mie-hoog/menu');
-    const snapshot = await menuRef.orderByChild('menu_id').equalTo(id).once('value');
+    const snapshot = await menuRef.once('value');
 
-    if (!snapshot.exists()) {
+    let foundMenu = null;
+
+    snapshot.forEach(categorySnap => {
+      categorySnap.forEach(menuSnap => {
+        const menu = menuSnap.val();
+        if (menu.menu_id === id) {
+          foundMenu = menu;
+        }
+      });
+    });
+
+    if (!foundMenu) {
       return res.status(404).json({ message: 'Menu not found' });
     }
 
-    let menu;
-    snapshot.forEach(child => {
-      menu = child.val();
-    });
-
-    res.status(200).json(menu);
+    res.status(200).json(foundMenu);
   } catch (error) {
     console.error('Error fetching menu:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -138,7 +149,6 @@ router.post('/delete', async (req, res) => {
       return res.status(400).json({ message: 'Both menu id and user id are required' });
     }
 
-    // Cek user level di mie-hoog/user/<user_id>
     const userSnap = await db.ref(`mie-hoog/user/${user_id}`).once('value');
     const userData = userSnap.val();
 
@@ -146,22 +156,24 @@ router.post('/delete', async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Admin only.' });
     }
 
-    // Cari menu berdasarkan id (key di Firebase, bukan menu_id)
     const menuRef = db.ref('mie-hoog/menu');
     const snapshot = await menuRef.once('value');
 
-    let menuKeyToDelete = null;
-    snapshot.forEach(child => {
-      if (child.val().id === id) {
-        menuKeyToDelete = child.key;
-      }
+    let targetPath = null;
+
+    snapshot.forEach(categorySnap => {
+      categorySnap.forEach(menuSnap => {
+        if (menuSnap.val().id === id) {
+          targetPath = `mie-hoog/menu/${categorySnap.key}/${menuSnap.key}`;
+        }
+      });
     });
 
-    if (!menuKeyToDelete) {
+    if (!targetPath) {
       return res.status(404).json({ message: 'Menu not found' });
     }
 
-    await menuRef.child(menuKeyToDelete).remove();
+    await db.ref(targetPath).remove();
     res.status(200).json({ message: 'Menu deleted successfully' });
 
   } catch (error) {
@@ -171,15 +183,15 @@ router.post('/delete', async (req, res) => {
 });
 
 // POST /update
-router.post('/update', upload.single('file'), async (req, res) => {
+router.post('/update', async (req, res) => {
   try {
     const { id, menu_name, menu_price, menu_des, user_id } = req.body;
+    const file = req.files?.file;
 
     if (!id || !user_id) {
       return res.status(400).json({ message: 'Menu id and user_id are required' });
     }
 
-    // Cek admin
     const userSnap = await db.ref(`mie-hoog/user/${user_id}`).once('value');
     const userData = userSnap.val();
     if (!userData || userData.level !== 'admin') {
@@ -189,14 +201,17 @@ router.post('/update', upload.single('file'), async (req, res) => {
     const menuRef = db.ref('mie-hoog/menu');
     const snapshot = await menuRef.once('value');
 
-    let targetKey = null;
-    snapshot.forEach(child => {
-      if (child.val().id === id) {
-        targetKey = child.key;
-      }
+    let targetPath = null;
+
+    snapshot.forEach(categorySnap => {
+      categorySnap.forEach(menuSnap => {
+        if (menuSnap.val().id === id) {
+          targetPath = `mie-hoog/menu/${categorySnap.key}/${menuSnap.key}`;
+        }
+      });
     });
 
-    if (!targetKey) {
+    if (!targetPath) {
       return res.status(404).json({ message: 'Menu not found' });
     }
 
@@ -205,21 +220,19 @@ router.post('/update', upload.single('file'), async (req, res) => {
     if (menu_price) updates.menu_price = menu_price;
     if (menu_des) updates.menu_des = menu_des;
 
-    // Jika upload gambar baru
-    if (req.file) {
-      const file = req.file;
-      const imageUrl = `http://127.0.0.1:3001/api/v1/image/${file.filename}`;
+    if (file) {
+      const uploadedFileName = await uploadImageToExternal(file);
+      const imageUrl = `https://image.rpnza.my.id/get/${uploadedFileName}`;
       updates.menu_img = imageUrl;
     }
 
-    await menuRef.child(targetKey).update(updates);
-
+    await db.ref(targetPath).update(updates);
     res.status(200).json({ message: 'Menu updated successfully' });
+
   } catch (error) {
     console.error('Error updating menu:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 module.exports = router;

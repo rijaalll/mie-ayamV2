@@ -14,7 +14,7 @@ export default function LandingHero() {
                 <div className="w-auto h-auto flex flex-col items-center gap-4 sm:flex-row sm:gap-5">
 
                     <div className="w-full max-w-[140px] sm:max-w-[160px] lg:max-w-[200px]">
-                        <Image src={webIcon} alt="web-icon" />
+                        <Image src={webIcon} alt="web-icon" priority />
                     </div>
 
                     <div className="w-full text-center flex flex-col gap-2 sm:text-start">
