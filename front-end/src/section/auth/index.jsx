@@ -1,19 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useLogin } from "@/src/utils/authContext";
 import { loginUser, registerUser } from "@/src/utils/api/auth/authHandle";
 
 export default function AuthPage() {
-    const { login, setLoginData, logout, name, username, level } = useLogin();
+  const router = useRouter();
+  const { login, setLoginData, logout, name, username, level } = useLogin();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [formData, setFormData] = useState({
-    name: '',
-    username: '',
-    password: ''
+    name: "",
+    username: "",
+    password: "",
   });
 
   useEffect(() => {
@@ -21,8 +23,8 @@ export default function AuthPage() {
   }, []);
 
   const checkExistingSession = () => {
-    const savedUsername = localStorage.getItem('userUsername');
-    const savedPassword = localStorage.getItem('userPassword');
+    const savedUsername = localStorage.getItem("userUsername");
+    const savedPassword = localStorage.getItem("userPassword");
 
     if (savedUsername && savedPassword) {
       handleAutoLogin(savedUsername, savedPassword);
@@ -40,12 +42,12 @@ export default function AuthPage() {
         username: data.user.username,
         name: data.user.name,
         level: data.user.level,
-        password
+        password,
       });
     } catch (error) {
-      console.error('Auto login error:', error);
-      localStorage.removeItem('userUsername');
-      localStorage.removeItem('userPassword');
+      console.error("Auto login error:", error);
+      localStorage.removeItem("userUsername");
+      localStorage.removeItem("userPassword");
     } finally {
       setLoading(false);
     }
@@ -54,24 +56,24 @@ export default function AuthPage() {
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
   };
 
   const handleLogin = async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const data = await loginUser({
         username: formData.username,
-        password: formData.password
+        password: formData.password,
       });
 
-      if (data.user.level === 'user') {
-        localStorage.setItem('userUsername', data.user.username);
-        localStorage.setItem('userPassword', formData.password);
+      if (data.user.level === "user") {
+        localStorage.setItem("userUsername", data.user.username);
+        localStorage.setItem("userPassword", formData.password);
       }
 
       setLoginData({
@@ -80,12 +82,23 @@ export default function AuthPage() {
         username: data.user.username,
         name: data.user.name,
         level: data.user.level,
-        password: formData.password
+        password: formData.password,
       });
 
-      setSuccess('Login berhasil!');
+      setSuccess("Login berhasil!");
+
+      // Redirect otomatis setelah 5 detik
+      setTimeout(() => {
+        if (data.user.level === "admin") {
+          router.push("/page/admin");
+        } else if (data.user.level === "kasir") {
+          router.push("/page/kasir");
+        } else {
+          router.push("/order");
+        }
+      }, 5000);
     } catch (err) {
-      setError(err.message || 'Login gagal');
+      setError(err.message || "Login gagal");
     } finally {
       setLoading(false);
     }
@@ -93,39 +106,57 @@ export default function AuthPage() {
 
   const handleRegister = async () => {
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
       await registerUser({
         name: formData.name,
         username: formData.username,
-        password: formData.password
+        password: formData.password,
       });
 
-      setSuccess('Registrasi berhasil! Silakan login.');
+      localStorage.setItem("userUsername", formData.username);
+      localStorage.setItem("userPassword", formData.password);
+
+      setSuccess("Registrasi berhasil! Melakukan login otomatis...");
       setIsLogin(true);
-      setFormData({ name: '', username: '', password: '' });
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (err) {
-      setError(err.message || 'Registrasi gagal');
+      setError(err.message || "Registrasi gagal");
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('userUsername');
-    localStorage.removeItem('userPassword');
+    localStorage.removeItem("userUsername");
+    localStorage.removeItem("userPassword");
     logout();
-    setFormData({ name: '', username: '', password: '' });
+    setFormData({ name: "", username: "", password: "" });
   };
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
-    setError('');
-    setSuccess('');
-    setFormData({ name: '', username: '', password: '' });
+    setError("");
+    setSuccess("");
+    setFormData({ name: "", username: "", password: "" });
   };
+
+  useEffect(() => {
+    if (login) {
+      if (level === "admin") {
+        router.push("/page/admin");
+      } else if (level === "kasir") {
+        router.push("/page/kasir");
+      } else {
+        router.push("/order");
+      }
+    }
+  }, [login])
 
   if (login) {
     return (
@@ -133,11 +164,23 @@ export default function AuthPage() {
         <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
           <div className="text-center mb-6">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              <svg
+                className="w-10 h-10 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800">Selamat Datang!</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Selamat Datang!
+            </h2>
             <p className="text-gray-600 mt-2">Anda berhasil login</p>
           </div>
 
@@ -152,9 +195,21 @@ export default function AuthPage() {
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-600">Level</p>
-              <p className="font-semibold text-gray-800 capitalize">{level || 'user'}</p>
+              <p className="font-semibold text-gray-800 capitalize">
+                {level || "user"}
+              </p>
             </div>
           </div>
+
+          {success && (
+            <div className="text-center text-sm text-green-700 mb-4">
+              {success}
+              <br />
+              <span className="text-gray-500">
+                Anda akan diarahkan dalam 5 detik...
+              </span>
+            </div>
+          )}
 
           <button
             onClick={handleLogout}
@@ -172,12 +227,26 @@ export default function AuthPage() {
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <svg
+              className="w-10 h-10 text-indigo-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">{isLogin ? 'Login' : 'Register'}</h1>
-          <p className="text-gray-600">{isLogin ? 'Masuk ke akun Anda' : 'Buat akun baru'}</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            {isLogin ? "Login" : "Register"}
+          </h1>
+          <p className="text-gray-600">
+            {isLogin ? "Masuk ke akun Anda" : "Buat akun baru"}
+          </p>
         </div>
 
         {error && (
@@ -194,7 +263,12 @@ export default function AuthPage() {
         <div className="space-y-6">
           {!isLogin && (
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap</label>
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Nama Lengkap
+              </label>
               <input
                 type="text"
                 id="name"
@@ -209,7 +283,12 @@ export default function AuthPage() {
           )}
 
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Username
+            </label>
             <input
               type="text"
               id="username"
@@ -223,7 +302,12 @@ export default function AuthPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Password
+            </label>
             <input
               type="password"
               id="password"
@@ -244,27 +328,45 @@ export default function AuthPage() {
           >
             {loading ? (
               <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 Processing...
               </>
+            ) : isLogin ? (
+              "Login"
             ) : (
-              isLogin ? 'Login' : 'Register'
+              "Register"
             )}
           </button>
         </div>
 
         <div className="mt-6 text-center">
           <p className="text-gray-600">
-            {isLogin ? 'Belum punya akun?' : 'Sudah punya akun?'}
+            {isLogin ? "Belum punya akun?" : "Sudah punya akun?"}
             <button
               type="button"
               onClick={toggleMode}
               className="ml-2 text-indigo-600 hover:text-indigo-500 font-semibold transition duration-200"
             >
-              {isLogin ? 'Register' : 'Login'}
+              {isLogin ? "Register" : "Login"}
             </button>
           </p>
         </div>
