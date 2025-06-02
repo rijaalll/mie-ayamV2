@@ -22,8 +22,11 @@ app.use('/api/v1/menu', require('./routes/v1/menu/menu'));
 // ROUTES ORDER
 app.use('/api/v1/order', require('./routes/v1/order/order'));
 
-// ROUTES IMAGE
-app.use('/api/v1/image', require('./routes/v1/images/image'));
+// ROUTES KATEGORI
+app.use('/api/v1/kategori', require('./routes/v1/kategori/kategori'));
+
+// ROUTES TABLE
+app.use('/api/v1/table', require('./routes/v1/table/table'));
 
 // ROUTES TEST
 app.use('/api/v1', require('./routes/test/test'));

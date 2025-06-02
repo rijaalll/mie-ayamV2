@@ -1,4 +1,4 @@
-import AdminPage from "@/src/section/admin"
+import AdminMainPage from "@/src/section/admin/components/main"
 
 export const metadata = {
     title: "Admin",
@@ -11,7 +11,7 @@ export const metadata = {
 export default function AdminApp() {
     return (
         <div>
-            <AdminPage />
+            <AdminMainPage />
         </div>
     )
 }

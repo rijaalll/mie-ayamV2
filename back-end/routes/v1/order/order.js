@@ -128,7 +128,41 @@ router.get('/user/:user_id', async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
     }
 });
-  
+
+// GET orders by specific date: /date/29-05-2025
+router.get('/date/:day-:month-:year', async (req, res) => {
+  try {
+    const { day, month, year } = req.params;
+
+    const snapshot = await db.ref('mie-hoog/order').once('value');
+
+    const matchedOrders = [];
+    snapshot.forEach(child => {
+      const order = child.val();
+      if (
+        order.order_day === day &&
+        order.order_month === month &&
+        order.order_year === year
+      ) {
+        matchedOrders.push(order);
+      }
+    });
+
+    if (matchedOrders.length === 0) {
+      return res.status(404).json({ message: 'No orders found for this date' });
+    }
+
+    res.status(200).json({
+      status: "OK",
+      date: `${day}-${month}-${year}`,
+      orders: matchedOrders
+    });
+  } catch (err) {
+    console.error('Error fetching orders by date:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
   
 router.post('/update', async (req, res) => {
     try {
