@@ -1,0 +1,17 @@
+[
+    {
+        "name": "Dashboard",
+        "path": "/page/admin",
+        "sub" : false
+    },
+    {
+        "name": "Manage",
+        "path": "",
+        "sub" : true
+    },
+    {
+        "name": "Selling",
+        "path": "/page/admin/selling",
+        "sub" : false
+    }
+]

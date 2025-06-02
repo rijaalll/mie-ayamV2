@@ -1,0 +1,14 @@
+[
+    {
+        "name": "kasir",
+        "path": "/page/admin/manage/kasir"
+    },
+    {
+        "name": "menu",
+        "path": "/page/admin/manage/menu"
+    },
+    {
+        "name": "meja",
+        "path": "/page/admin/manage/table"
+    }
+]

@@ -22,8 +22,8 @@ export default function AdminLayout({ children }) {
                 </div>
 
                 {/* ADMIN MOBILE MENU */}
-                <div className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-[200%]"} sm:hidden fixed z-[11] left-4 w-auto h-full flex items-center bg-zinc-100/5 backdrop-blur-xs`}>
-                    <div className="w-auto h-[80dvh] bg-zinc-500">
+                <div className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-[200%]"} sm:hidden fixed z-[11] left-0 px-5 w-[50%] h-full flex items-center bg-zinc-100/5 backdrop-blur-xs`}>
+                    <div className="w-full h-[80dvh] bg-zinc-200 rounded-2xl">
                         <AdminMobileMenu setMobileMenuOpen={setMobileMenuOpen} />
                     </div>
                 </div>
