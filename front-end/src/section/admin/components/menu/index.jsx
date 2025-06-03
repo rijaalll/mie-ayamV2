@@ -75,35 +75,38 @@ export default function MenuManagement() {
     setLoading(true);
     setError("");
     setSuccess("");
-
+  
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("menu_name", formData.menu_name);
       formDataToSend.append("menu_price", formData.menu_price);
       formDataToSend.append("menu_des", formData.menu_des);
       formDataToSend.append("category", formData.category);
-      formDataToSend.append("user_id", userId);
-      
+  
+      // Gunakan userId yang valid, atau fallback ID admin untuk dev/testing
+      const adminUserId = userId || "PASTE_VALID_ADMIN_USER_ID";
+      formDataToSend.append("user_id", adminUserId);
+  
       if (formData.file) {
         formDataToSend.append("file", formData.file);
       }
-
-      let response;
+  
+      // Tentukan endpoint berdasarkan editMode
+      const endpoint = editMode && selectedMenu
+        ? `${API_URL}/menu/update`
+        : `${API_URL}/menu/add`;
+  
       if (editMode && selectedMenu) {
         formDataToSend.append("id", selectedMenu.id);
-        response = await fetch(`${API_URL}/menu/update`, {
-          method: "POST",
-          body: formDataToSend,
-        });
-      } else {
-        response = await fetch(`${API_URL}/menu/add`, {
-          method: "POST",
-          body: formDataToSend,
-        });
       }
-
+  
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: formDataToSend,
+      });
+  
       const data = await response.json();
-      
+  
       if (response.ok) {
         setSuccess(editMode ? "Menu berhasil diupdate!" : "Menu berhasil ditambahkan!");
         resetForm();
@@ -119,6 +122,7 @@ export default function MenuManagement() {
       setLoading(false);
     }
   };
+  
 
   const handleEdit = (menu) => {
     setSelectedMenu(menu);
