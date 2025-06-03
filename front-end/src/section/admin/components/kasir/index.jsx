@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useLogin } from '@/src/utils/authContext'
+import { useAuth } from '@/src/utils/authContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export default function KasirManagement() {
-    const { id: adminId } = useLogin()
+    const { id: adminId } = useAuth()
     const [users, setUsers] = useState([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)

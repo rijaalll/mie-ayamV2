@@ -4,14 +4,14 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { useLogin } from '@/src/utils/authContext'
+import { useAuth } from '@/src/utils/authContext'
 
 import NavData from '@/src/data/admin/adminNav.json'
 import ManageData from '@/src/data/admin/manageNav.json'
 
 export default function AdminSideNav() {
     const pathname = usePathname()
-    const { logout, name } = useLogin()
+    const { logout, name } = useAuth()
     const [ showSubMenu, setShowSubMenu ] = useState(true)
 
     const toggleSubMenu = () => {
@@ -20,7 +20,7 @@ export default function AdminSideNav() {
 
     const handleLogout = () => {
         logout()
-        window.location.href = '/page/auth/login'
+        window.location.href = '/auth'
     }
 
     return (

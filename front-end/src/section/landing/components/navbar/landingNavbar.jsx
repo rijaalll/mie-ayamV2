@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
-import { useLogin } from "@/src/utils/authContext";
+import { useAuth } from "@/src/utils/authContext";
 import { loginUser } from "@/src/utils/api/auth/authHandle";
 
 export default function LandingNavbar() {
-    const { login, setLoginData, name, level, logout } = useLogin();
+    const { login, setLoginData, name, level, logout } = useAuth();
 
     useEffect(() => {
         checkExistingSession();

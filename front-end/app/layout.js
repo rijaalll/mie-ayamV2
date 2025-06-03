@@ -1,4 +1,4 @@
-import { LoginProvider } from "@/src/utils/authContext";
+import { AuthProvider } from "@/src/utils/authContext";
 
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -13,9 +13,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="id">
       <body className={`${fontInter.variable} antialiased w-full h-auto min-h-[100dvh] bg-zinc-100`}>
-        <LoginProvider>
+        <AuthProvider>
           {children}
-        </LoginProvider>
+        </AuthProvider>
       </body>
     </html>
   );

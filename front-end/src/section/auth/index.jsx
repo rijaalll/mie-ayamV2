@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useLogin } from "@/src/utils/authContext";
+import { useAuth } from "@/src/utils/authContext";
 import { loginUser, registerUser } from "@/src/utils/api/auth/authHandle";
 
 export default function AuthPage() {
   const router = useRouter();
-  const { login, setLoginData, logout, name, username, level } = useLogin();
+  const { user, login, logout } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -18,38 +18,22 @@ export default function AuthPage() {
     password: "",
   });
 
+  // Redirect if user is already logged in
   useEffect(() => {
-    checkExistingSession();
-  }, []);
-
-  const checkExistingSession = () => {
-    const savedUsername = localStorage.getItem("userUsername");
-    const savedPassword = localStorage.getItem("userPassword");
-
-    if (savedUsername && savedPassword) {
-      handleAutoLogin(savedUsername, savedPassword);
+    if (user.isLoggedIn) {
+      const redirectPath = getRedirectPath(user.level);
+      router.push(redirectPath);
     }
-  };
+  }, [user.isLoggedIn, user.level, router]);
 
-  const handleAutoLogin = async (username, password) => {
-    try {
-      setLoading(true);
-      const data = await loginUser({ username, password });
-
-      setLoginData({
-        login: true,
-        id: data.user.id,
-        username: data.user.username,
-        name: data.user.name,
-        level: data.user.level,
-        password,
-      });
-    } catch (error) {
-      console.error("Auto login error:", error);
-      localStorage.removeItem("userUsername");
-      localStorage.removeItem("userPassword");
-    } finally {
-      setLoading(false);
+  const getRedirectPath = (level) => {
+    switch (level) {
+      case 'admin':
+        return '/page/admin';
+      case 'kasir':
+        return '/page/kasir';
+      default:
+        return '/order';
     }
   };
 
@@ -63,21 +47,23 @@ export default function AuthPage() {
   };
 
   const handleLogin = async () => {
+    if (!formData.username || !formData.password) {
+      setError("Username dan password harus diisi");
+      return;
+    }
+
     setLoading(true);
     setError("");
+    setSuccess("");
+
     try {
       const data = await loginUser({
         username: formData.username,
         password: formData.password,
       });
 
-      if (data.user.level === "user") {
-        localStorage.setItem("userUsername", data.user.username);
-        localStorage.setItem("userPassword", formData.password);
-      }
-
-      setLoginData({
-        login: true,
+      // Use the login function from context
+      login({
         id: data.user.id,
         username: data.user.username,
         name: data.user.name,
@@ -85,18 +71,14 @@ export default function AuthPage() {
         password: formData.password,
       });
 
-      setSuccess("Login berhasil!");
-
-      // Redirect otomatis setelah 5 detik
+      setSuccess("Login berhasil! Mengalihkan...");
+      
+      // Redirect based on user level
       setTimeout(() => {
-        if (data.user.level === "admin") {
-          router.push("/page/admin");
-        } else if (data.user.level === "kasir") {
-          router.push("/page/kasir");
-        } else {
-          router.push("/order");
-        }
-      }, 5000);
+        const redirectPath = getRedirectPath(data.user.level);
+        router.push(redirectPath);
+      }, 1500);
+
     } catch (err) {
       setError(err.message || "Login gagal");
     } finally {
@@ -105,26 +87,26 @@ export default function AuthPage() {
   };
 
   const handleRegister = async () => {
+    if (!formData.name || !formData.username || !formData.password) {
+      setError("Semua field harus diisi");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess("");
 
     try {
-      await registerUser({
+      const data = await registerUser({
         name: formData.name,
         username: formData.username,
         password: formData.password,
       });
 
-      localStorage.setItem("userUsername", formData.username);
-      localStorage.setItem("userPassword", formData.password);
-
-      setSuccess("Registrasi berhasil! Melakukan login otomatis...");
+      setSuccess("Registrasi berhasil! Silakan login dengan akun baru Anda.");
       setIsLogin(true);
+      setFormData({ name: "", username: "", password: "" });
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     } catch (err) {
       setError(err.message || "Registrasi gagal");
     } finally {
@@ -133,10 +115,10 @@ export default function AuthPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("userUsername");
-    localStorage.removeItem("userPassword");
     logout();
     setFormData({ name: "", username: "", password: "" });
+    setError("");
+    setSuccess("");
   };
 
   const toggleMode = () => {
@@ -146,19 +128,8 @@ export default function AuthPage() {
     setFormData({ name: "", username: "", password: "" });
   };
 
-  useEffect(() => {
-    if (login) {
-      if (level === "admin") {
-        router.push("/page/admin");
-      } else if (level === "kasir") {
-        router.push("/page/kasir");
-      } else {
-        router.push("/order");
-      }
-    }
-  }, [login])
-
-  if (login) {
+  // Show logged in state
+  if (user.isLoggedIn) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
@@ -181,42 +152,40 @@ export default function AuthPage() {
             <h2 className="text-2xl font-bold text-gray-800">
               Selamat Datang!
             </h2>
-            <p className="text-gray-600 mt-2">Anda berhasil login</p>
+            <p className="text-gray-600 mt-2">Anda sudah login</p>
           </div>
 
           <div className="space-y-4 mb-6">
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-600">Nama</p>
-              <p className="font-semibold text-gray-800">{name}</p>
+              <p className="font-semibold text-gray-800">{user.name}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-600">Username</p>
-              <p className="font-semibold text-gray-800">{username}</p>
+              <p className="font-semibold text-gray-800">{user.username}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-600">Level</p>
               <p className="font-semibold text-gray-800 capitalize">
-                {level || "user"}
+                {user.level}
               </p>
             </div>
           </div>
 
-          {success && (
-            <div className="text-center text-sm text-green-700 mb-4">
-              {success}
-              <br />
-              <span className="text-gray-500">
-                Anda akan diarahkan dalam 5 detik...
-              </span>
-            </div>
-          )}
-
-          <button
-            onClick={handleLogout}
-            className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-lg hover:shadow-xl"
-          >
-            Logout
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push(getRedirectPath(user.level))}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-lg hover:shadow-xl"
+            >
+              Masuk ke Dashboard
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-lg hover:shadow-xl"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     );
