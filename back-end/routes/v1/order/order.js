@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../../../utils/firebase');
 
-
 router.get('/all', async (req, res) => {
     try {
       const snapshot = await db.ref('mie-hoog/order').once('value');
@@ -16,21 +15,20 @@ router.get('/all', async (req, res) => {
       console.error('Error fetching orders:', err);
       res.status(500).json({ message: 'Internal server error' });
     }
-  });
-  
+});
 
 // POST /order/add
 router.post('/add', async (req, res) => {
   try {
     const {
-      user_id,
+      cust_name,
       table_number,
       order_status,
       order_list
     } = req.body;
 
-    if (!user_id || table_number === undefined || order_status === undefined || !order_list) {
-      return res.status(400).json({ message: 'All fields are required' });
+    if (!cust_name || table_number === undefined || order_status === undefined || !order_list) {
+      return res.status(400).json({ message: 'All fields are required (cust_name, table_number, order_status, order_list)' });
     }
 
     // Tanggal otomatis
@@ -42,9 +40,11 @@ router.post('/add', async (req, res) => {
     // Ambil data menu dari Firebase
     const menuSnapshot = await db.ref('mie-hoog/menu').once('value');
     const menus = {};
-    menuSnapshot.forEach(child => {
-      const item = child.val();
-      menus[item.id] = parseInt(item.menu_price);
+    menuSnapshot.forEach(categorySnap => {
+      categorySnap.forEach(menuSnap => {
+        const item = menuSnap.val();
+        menus[item.id] = parseInt(item.menu_price);
+      });
     });
 
     // Hitung total
@@ -60,18 +60,22 @@ router.post('/add', async (req, res) => {
       order_total += price * quantity;
     }
 
-    // Simpan ke Firebase
+    // Generate Firebase key first, then create custom ID
     const orderRef = db.ref('mie-hoog/order').push();
+    const firebaseKey = orderRef.key;
+    const customId = `MH-${firebaseKey}-${cust_name}`;
+
     const newOrder = {
-      id: orderRef.key,
-      user_id,
+      id: customId,
+      cust_name,
       table_number,
       order_day,
       order_month,
       order_year,
       order_status,
       order_total,
-      order_list
+      order_list,
+      createdAt: Date.now()
     };
 
     await orderRef.set(newOrder);
@@ -108,13 +112,13 @@ router.get('/id/:id', async (req, res) => {
     }
 });
 
-router.get('/user/:user_id', async (req, res) => {
+router.get('/customer/:cust_name', async (req, res) => {
     try {
-      const { user_id } = req.params;
-      const snapshot = await db.ref('mie-hoog/order').orderByChild('user_id').equalTo(user_id).once('value');
+      const { cust_name } = req.params;
+      const snapshot = await db.ref('mie-hoog/order').orderByChild('cust_name').equalTo(cust_name).once('value');
   
       if (!snapshot.exists()) {
-        return res.status(404).json({ message: 'No orders found for this user' });
+        return res.status(404).json({ message: 'No orders found for this customer' });
       }
   
       const orders = [];
@@ -124,46 +128,11 @@ router.get('/user/:user_id', async (req, res) => {
   
       res.status(200).json({ status: "OK", orders });
     } catch (err) {
-      console.error('Error fetching orders by user_id:', err);
+      console.error('Error fetching orders by customer name:', err);
       res.status(500).json({ message: 'Internal server error' });
     }
 });
 
-// GET orders by specific date: /date/29-05-2025
-router.get('/date/:day-:month-:year', async (req, res) => {
-  try {
-    const { day, month, year } = req.params;
-
-    const snapshot = await db.ref('mie-hoog/order').once('value');
-
-    const matchedOrders = [];
-    snapshot.forEach(child => {
-      const order = child.val();
-      if (
-        order.order_day === day &&
-        order.order_month === month &&
-        order.order_year === year
-      ) {
-        matchedOrders.push(order);
-      }
-    });
-
-    if (matchedOrders.length === 0) {
-      return res.status(404).json({ message: 'No orders found for this date' });
-    }
-
-    res.status(200).json({
-      status: "OK",
-      date: `${day}-${month}-${year}`,
-      orders: matchedOrders
-    });
-  } catch (err) {
-    console.error('Error fetching orders by date:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-  
 router.post('/update', async (req, res) => {
     try {
       const { id, updates } = req.body;
