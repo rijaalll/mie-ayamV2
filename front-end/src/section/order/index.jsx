@@ -1,4 +1,3 @@
-// front-end/src/section/order/index.jsx
 "use client";
 import { useState, useEffect } from "react";
 
@@ -12,48 +11,47 @@ export default function OrderPage({ tableId }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const [orderId, setOrderId] = useState(null);
+  const [orderStatus, setOrderStatus] = useState(null);
+  const [orderedItems, setOrderedItems] = useState([]);
+  const [pollingId, setPollingId] = useState(null);
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  // Fetch table data by ID
+  // Fetch table data
   useEffect(() => {
     const fetchTableData = async () => {
       try {
         setTableLoading(true);
-        const response = await fetch(`${API_URL}/table/${tableId}`);
-        const data = await response.json();
-        
-        // Langsung set data-nya karena tidak ada `data.table`, tapi data sudah benar
-        if (response.ok && data && data.nomor) {
-            setTableData(data);
+        const res = await fetch(`${API_URL}/table/${tableId}`);
+        const data = await res.json();
+        if (res.ok && data && data.nomor) {
+          setTableData(data);
         } else {
-            setError("Meja tidak ditemukan atau tidak valid");
+          setError("Meja tidak ditemukan atau tidak valid");
         }
-  
-      } catch (error) {
-        console.error("Error fetching table data:", error);
+      } catch (err) {
+        console.error(err);
         setError("Gagal mengambil data meja");
       } finally {
         setTableLoading(false);
       }
     };
 
-    if (tableId) {
-      fetchTableData();
-    }
+    if (tableId) fetchTableData();
   }, [tableId, API_URL]);
 
-  // Fetch menu data
+  // Fetch menu list
   useEffect(() => {
     const fetchMenus = async () => {
       try {
-        const response = await fetch(`${API_URL}/menu/all`);
-        const data = await response.json();
-        
+        const res = await fetch(`${API_URL}/menu/all`);
+        const data = await res.json();
         if (data.status === "OK" && data.all_menu) {
           setMenus(data.all_menu);
         }
-      } catch (error) {
-        console.error("Error fetching menus:", error);
+      } catch (err) {
+        console.error(err);
         setError("Gagal mengambil data menu");
       }
     };
@@ -61,296 +59,239 @@ export default function OrderPage({ tableId }) {
     fetchMenus();
   }, [API_URL]);
 
+  // Poll order status every 5s
+  useEffect(() => {
+    if (!orderId) return;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_URL}/order/id/${orderId}`);
+        const data = await res.json();
+
+        if (res.ok && data) {
+          setOrderStatus(data.order_status);
+          const items = Object.entries(data.order_list).map(([id, quantity]) => {
+            const menuItem = menus.find(m => m.id === id);
+            return {
+              ...menuItem,
+              quantity: parseInt(quantity),
+            };
+          });
+          setOrderedItems(items);
+        } else {
+          console.warn("Order not found or invalid response");
+        }
+      } catch (err) {
+        console.error("Error polling order:", err);
+      }
+    }, 5000);
+
+    setPollingId(intervalId);
+
+    return () => clearInterval(intervalId); // cleanup
+  }, [orderId, menus, API_URL]);
+
   const addToCart = (menu) => {
-    const existingItem = cart.find(item => item.id === menu.id);
-    
-    if (existingItem) {
-      setCart(cart.map(item =>
-        item.id === menu.id 
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
+    const exist = cart.find(item => item.id === menu.id);
+    if (exist) {
+      setCart(cart.map(item => item.id === menu.id
+        ? { ...item, quantity: item.quantity + 1 }
+        : item));
     } else {
       setCart([...cart, { ...menu, quantity: 1 }]);
     }
   };
 
-  const removeFromCart = (menuId) => {
-    setCart(cart.filter(item => item.id !== menuId));
+  const removeFromCart = (id) => {
+    setCart(cart.filter(item => item.id !== id));
   };
 
-  const updateQuantity = (menuId, quantity) => {
-    if (quantity === 0) {
-      removeFromCart(menuId);
-      return;
-    }
-    
-    setCart(cart.map(item =>
-      item.id === menuId 
-        ? { ...item, quantity: quantity }
-        : item
-    ));
+  const updateQuantity = (id, qty) => {
+    if (qty <= 0) return removeFromCart(id);
+    setCart(cart.map(item => item.id === id ? { ...item, quantity: qty } : item));
   };
 
-  const getTotalPrice = () => {
-    return cart.reduce((total, item) => 
-      total + (parseInt(item.menu_price) * item.quantity), 0
-    );
-  };
+  const getTotalPrice = () =>
+    cart.reduce((sum, item) => sum + parseInt(item.menu_price) * item.quantity, 0);
 
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
-    
-    if (!customerName.trim()) {
-      setError("Nama customer harus diisi");
-      return;
-    }
-
-    if (cart.length === 0) {
-      setError("Keranjang masih kosong");
-      return;
-    }
-
-    if (!tableData) {
-      setError("Data meja tidak valid");
-      return;
-    }
-
-    setLoading(true);
     setError("");
     setSuccess("");
+    setLoading(true);
+
+    if (!customerName.trim()) {
+      setError("Nama customer harus diisi");
+      setLoading(false);
+      return;
+    }
+
+    if (!tableData || cart.length === 0) {
+      setError("Data meja tidak valid atau keranjang kosong");
+      setLoading(false);
+      return;
+    }
 
     try {
-      // Prepare order list for API
       const orderList = {};
       cart.forEach(item => {
         orderList[item.id] = item.quantity;
       });
 
-      const orderData = {
+      const body = {
         cust_name: customerName.trim(),
-        table_number: tableData.nomor, // Use table number from API
-        order_status: 0, // Pending status
+        table_number: tableData.nomor,
+        order_status: 0,
         order_list: orderList
       };
 
-      console.log("Sending order data:", orderData); // Debug log
-
-      const response = await fetch(`${API_URL}/order/add`, {
+      const res = await fetch(`${API_URL}/order/add`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(orderData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (response.ok) {
-        setSuccess(`Pesanan berhasil dibuat! ID Pesanan: ${data.order.id}`);
-        // Reset form
+      if (res.ok) {
+        setSuccess(`Pesanan berhasil dikirim. ID: ${data.order.id}`);
+        setOrderId(data.order.id);
         setCart([]);
         setCustomerName("");
       } else {
         setError(data.message || "Gagal membuat pesanan");
       }
-    } catch (error) {
-      console.error("Error creating order:", error);
-      setError("Terjadi kesalahan saat membuat pesanan");
+    } catch (err) {
+      console.error(err);
+      setError("Terjadi kesalahan saat mengirim pesanan");
     } finally {
       setLoading(false);
     }
   };
 
-  // Show loading while fetching table data
-  if (tableLoading) {
+  // UI for polling status
+  const renderOrderStatus = () => {
+    if (!orderId) return null;
+
+    let statusText = "";
+    switch (orderStatus) {
+      case 0: statusText = "Menunggu konfirmasi"; break;
+      case 1: statusText = "Selesaikan pembayaran"; break;
+      case 2: statusText = "Pesanan dikonfirmasi"; break;
+      case 3: statusText = "Pesanan sedang disiapkan"; break;
+      case 4: statusText = "Pesanan selesai"; break;
+      default: statusText = "Status tidak diketahui"; break;
+    }
+
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Memuat data meja...</p>
+      <div className="bg-white shadow-md rounded-lg p-6 mt-8">
+        <h3 className="text-xl font-bold text-gray-800 mb-4">Status Pesanan</h3>
+        <p className="text-blue-700 font-semibold mb-2">{statusText}</p>
+
+        <ul className="mt-4 space-y-2">
+          {orderedItems.map((item) => (
+            <li key={item.id} className="flex justify-between border-b pb-2">
+              <span>{item.menu_name} x {item.quantity}</span>
+              <span>Rp {(item.quantity * parseInt(item.menu_price)).toLocaleString('id-ID')}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-4 font-bold text-right text-green-700">
+          Total: Rp {orderedItems.reduce((sum, i) => sum + i.quantity * parseInt(i.menu_price), 0).toLocaleString('id-ID')}
         </div>
       </div>
     );
+  };
+
+  if (tableLoading) {
+    return <div className="min-h-screen flex justify-center items-center">Loading...</div>;
   }
 
-  // Show error if table not found
   if (!tableData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Meja Tidak Ditemukan</h1>
-          <p className="text-gray-600">Meja dengan ID "{tableId}" tidak ditemukan atau tidak valid.</p>
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen flex justify-center items-center text-red-500">Meja tidak ditemukan</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Mie Hoog Restaurant</h1>
-              <p className="text-gray-600">Meja Nomor {tableData.nomor}</p>
-            </div>
-            {cart.length > 0 && (
-              <div className="text-right">
-                <p className="text-sm text-gray-600">{cart.length} item dalam keranjang</p>
-                <p className="text-lg font-bold text-blue-600">
-                  Rp {getTotalPrice().toLocaleString('id-ID')}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-100 px-4 py-6">
+      <h1 className="text-2xl font-bold mb-2">Meja Nomor {tableData.nomor}</h1>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Messages */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded">
-            {success}
-          </div>
-        )}
+      {error && <div className="bg-red-100 text-red-700 p-4 mb-4 rounded">{error}</div>}
+      {success && <div className="bg-green-100 text-green-700 p-4 mb-4 rounded">{success}</div>}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Menu List */}
-          <div className="lg:col-span-2">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">Menu Tersedia</h2>
-            
-            {menus.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Memuat menu...</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {menus.map((menu) => (
-                  <div key={menu.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                    <img
-                      src={menu.menu_img}
-                      alt={menu.menu_name}
-                      className="w-full h-48 object-cover"
-                      onError={(e) => {
-                        e.target.src = '/images/default-food.jpg'; // Fallback image
-                      }}
-                    />
-                    <div className="p-4">
-                      <h3 className="font-bold text-lg text-gray-800 mb-2">{menu.menu_name}</h3>
-                      <p className="text-gray-600 text-sm mb-3">{menu.menu_des}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xl font-bold text-blue-600">
-                          Rp {parseInt(menu.menu_price).toLocaleString('id-ID')}
-                        </span>
-                        <button
-                          onClick={() => addToCart(menu)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-                        >
-                          Tambah
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Cart & Order Form */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Keranjang Pesanan</h2>
-              
-              {cart.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Keranjang masih kosong</p>
-              ) : (
-                <>
-                  <div className="space-y-4 mb-6">
-                    {cart.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between border-b pb-4">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-800">{item.menu_name}</h4>
-                          <p className="text-gray-600 text-sm">
-                            Rp {parseInt(item.menu_price).toLocaleString('id-ID')}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
-                          >
-                            -
-                          </button>
-                          <span className="w-8 text-center font-medium">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
-                          >
-                            +
-                          </button>
-                          <button
-                            onClick={() => removeFromCart(item.id)}
-                            className="ml-2 text-red-500 hover:text-red-700"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="border-t pt-4 mb-6">
-                    <div className="flex justify-between items-center text-lg font-bold">
-                      <span>Total:</span>
-                      <span className="text-blue-600">
-                        Rp {getTotalPrice().toLocaleString('id-ID')}
-                      </span>
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleSubmitOrder} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nama Pemesan
-                      </label>
-                      <input
-                        type="text"
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Masukkan nama Anda"
-                      />
-                    </div>
-
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-sm text-gray-600">
-                        <strong>Meja:</strong> {tableData.nomor}
-                      </p>
-                    </div>
-
+      {!orderId && (
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* Menu */}
+          <div className="md:col-span-2">
+            <h2 className="text-xl font-bold mb-4">Menu</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {menus.map(menu => (
+                <div key={menu.id} className="bg-white p-4 rounded-lg shadow">
+                  <img src={menu.menu_img} alt={menu.menu_name} className="w-full h-40 object-cover mb-2 rounded" />
+                  <h3 className="font-semibold">{menu.menu_name}</h3>
+                  <p className="text-sm text-gray-600">{menu.menu_des}</p>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-blue-600 font-bold">
+                      Rp {parseInt(menu.menu_price).toLocaleString('id-ID')}
+                    </span>
                     <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50"
+                      className="bg-blue-600 text-white px-3 py-1 rounded"
+                      onClick={() => addToCart(menu)}
                     >
-                      {loading ? "Memproses..." : "Pesan Sekarang"}
+                      Tambah
                     </button>
-                  </form>
-                </>
-              )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+
+          {/* Cart */}
+          <div>
+            <h2 className="text-xl font-bold mb-4">Keranjang</h2>
+            <form onSubmit={handleSubmitOrder} className="bg-white p-4 rounded-lg shadow space-y-4">
+              {cart.length === 0 ? (
+                <p className="text-gray-500 text-sm">Belum ada item</p>
+              ) : (
+                cart.map(item => (
+                  <div key={item.id} className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{item.menu_name}</p>
+                      <p className="text-sm text-gray-500">Rp {parseInt(item.menu_price).toLocaleString('id-ID')}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} type="button">-</button>
+                      <span>{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} type="button">+</button>
+                      <button onClick={() => removeFromCart(item.id)} type="button" className="text-red-500">🗑️</button>
+                    </div>
+                  </div>
+                ))
+              )}
+
+              <input
+                type="text"
+                placeholder="Nama Anda"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
+                required
+              />
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-green-600 text-white py-2 rounded"
+              >
+                {loading ? "Mengirim..." : "Pesan Sekarang"}
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Render status polling */}
+      {renderOrderStatus()}
     </div>
   );
 }

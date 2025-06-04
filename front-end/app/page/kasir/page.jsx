@@ -1,4 +1,5 @@
-import KasirPage from "@/src/section/kasir"
+import ProtectedRoute from "@/src/components/protectRoute";
+import KasirPage from "@/src/section/kasir";
 
 export const metadata = {
     title: "Kasir",
@@ -10,8 +11,8 @@ export const metadata = {
 
 export default function KasirApp() {
     return (
-        <div>
+        <ProtectedRoute requiredLevel="kasir">
             <KasirPage />
-        </div>
-    )
+        </ProtectedRoute>
+    );
 }
