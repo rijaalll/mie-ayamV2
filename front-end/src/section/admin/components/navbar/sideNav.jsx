@@ -33,7 +33,9 @@ export default function AdminSideNav() {
                     </div>
                     <div>
                         <h2 className="font-semibold text-gray-800">Admin Panel</h2>
-                        <p className="text-sm text-gray-600">{name}</p>
+                        <p className="text-sm text-gray-600">
+                            {name ? `Welcome, ${name}` : 'Welcome, Admin'}
+                        </p>
                     </div>
                 </div>
             </div>
