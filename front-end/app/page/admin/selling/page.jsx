@@ -1,5 +1,5 @@
 // app/order/[id]/page.js
-import OrderPage from "@/src/section/selling";
+import SellingPage from "@/src/section/admin/components/selling";
 
 export const metadata = {
     title: "Penjualan",
@@ -14,7 +14,7 @@ export default async function SellingApp() {
 
     return (
         <div>
-            <SellingPage tableId={tableId} />
+            <SellingPage />
         </div>
     );
 }

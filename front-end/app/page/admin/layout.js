@@ -12,7 +12,7 @@ export default function AdminLayout({ children }) {
             <div className="w-full h-auto min-h-[100dvh] sm:flex sm:flex-row">
 
                 {/* ADMIN SIDEBAR DEKSTOP */}
-                <div className="max-sm:hidden">
+                <div className="max-sm:hidden sm:fixed top-0 z-[10] left-0">
                     <AdminSideNav />
                 </div>
 
@@ -31,7 +31,7 @@ export default function AdminLayout({ children }) {
                     </div>
 
                     {/* ADMIN PAGE */}
-                    <div className="w-[90%] mt-[4rem]">
+                    <div className="w-[90%] mt-[4rem] sm:w-[calc(100%-260px)] sm:ml-[260px]">
                         {children}
                     </div>
 
