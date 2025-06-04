@@ -8,6 +8,12 @@ export const metadata = {
   },
 };
 
+export const openGraph = {
+  title: "Mie Hoog",
+  description: "website management Mie hoog",
+  images: "/images/web-logo-bg.JPG",
+};
+
 export default function Home() {
   return (
     <>

@@ -6,10 +6,10 @@ import firebaseLogo from "@/public/logo/firebaseLogo.png";
 import tailwindLogo from "@/public/logo/tailwindLogo.png";
 
 const stackInfo = [
-    { logoName: "React JS", logoSrc: reactLogo },
-    { logoName: "Next JS", logoSrc: nextLogo },
-    { logoName: "Firebase", logoSrc: firebaseLogo },
-    { logoName: "Tailwind CSS", logoSrc: tailwindLogo },
+    { logoName: "React JS", logoSrc: reactLogo, Url: "https://react.dev/" },
+    { logoName: "Next JS", logoSrc: nextLogo, Url: "https://nextjs.org/" },
+    { logoName: "Firebase", logoSrc: firebaseLogo, Url: "https://firebase.google.com/" },
+    { logoName: "Tailwind CSS", logoSrc: tailwindLogo, Url: "https://tailwindcss.com/" },
   ];
 
 import infoJson from "@/src/info.json";
@@ -36,7 +36,7 @@ export const InfoElement = () => {
                     </div>
                     <div className="flex flex-col items-start gap-1">
                         {stackInfo.map((stack, index) => (
-                            <div key={index} className="flex flex-row gap-2 items-center">
+                            <div onClick={() => window.open(stack.Url, "_blank")} key={index} className="flex flex-row gap-2 items-center">
                                 <div className="w-full max-w-[21px]">
                                     <Image src={stack.logoSrc} alt={stack.logoName} />
                                 </div>
