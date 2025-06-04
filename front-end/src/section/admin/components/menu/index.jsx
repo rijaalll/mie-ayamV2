@@ -5,7 +5,7 @@ import { useAuth } from "@/src/utils/authContext";
 import { useRouter } from "next/navigation";
 
 export default function MenuManagement() {
-  const { login, level, id: userId } = useAuth();
+  const { isLoggedIn, level, id: userId, user } = useAuth();
   const router = useRouter();
   const [menus, setMenus] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -26,10 +26,22 @@ export default function MenuManagement() {
     file: null,
   });
 
+  // Check authentication and authorization
   useEffect(() => {
+    if (!isLoggedIn) {
+      router.push('/auth');
+      return;
+    }
+    
+    if (level !== 'admin') {
+      router.push('/');
+      return;
+    }
+    
+    // Load data only if user is authenticated
     fetchMenus();
     fetchCategories();
-  }, []);
+  }, [isLoggedIn, level, router]);
 
   const fetchMenus = async () => {
     try {
@@ -72,6 +84,13 @@ export default function MenuManagement() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate user authentication
+    if (!userId) {
+      setError("Anda harus login sebagai admin untuk melakukan aksi ini");
+      return;
+    }
+    
     setLoading(true);
     setError("");
     setSuccess("");
@@ -82,10 +101,7 @@ export default function MenuManagement() {
       formDataToSend.append("menu_price", formData.menu_price);
       formDataToSend.append("menu_des", formData.menu_des);
       formDataToSend.append("category", formData.category);
-  
-      // Gunakan userId yang valid, atau fallback ID admin untuk dev/testing
-      const adminUserId = userId || "PASTE_VALID_ADMIN_USER_ID";
-      formDataToSend.append("user_id", adminUserId);
+      formDataToSend.append("user_id", userId);
   
       if (formData.file) {
         formDataToSend.append("file", formData.file);
@@ -122,7 +138,6 @@ export default function MenuManagement() {
       setLoading(false);
     }
   };
-  
 
   const handleEdit = (menu) => {
     setSelectedMenu(menu);
@@ -139,6 +154,12 @@ export default function MenuManagement() {
 
   const handleDelete = async (menu) => {
     if (!confirm("Apakah Anda yakin ingin menghapus menu ini?")) {
+      return;
+    }
+
+    // Validate user authentication
+    if (!userId) {
+      setError("Anda harus login sebagai admin untuk melakukan aksi ini");
       return;
     }
 
@@ -193,10 +214,25 @@ export default function MenuManagement() {
     resetForm();
   };
 
+  // Show loading state while checking authentication
+  if (!isLoggedIn || level !== 'admin') {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Kelola Menu</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Kelola Menu</h1>
+          <p className="text-gray-600 mt-1">Selamat datang, {user.name} (ID: {userId})</p>
+        </div>
         <button
           onClick={openAddModal}
           className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"

@@ -91,6 +91,14 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    // Expose individual properties for easier access
+    isLoggedIn: user.isLoggedIn,
+    id: user.id,
+    name: user.name,
+    username: user.username,
+    level: user.level,
+    password: user.password,
+    // Functions
     login,
     logout,
     hasLevel,
