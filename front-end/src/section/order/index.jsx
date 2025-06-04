@@ -1,7 +1,9 @@
+// front-end/src/section/order/index.jsx
+
 "use client";
 import { useState, useEffect } from "react";
 import { Sidebar, BottomNav } from "./components";
-import { ShoppingCart, Home, Clock, Menu, X } from "lucide-react";
+import { ShoppingCart, Home, Clock, Menu, X, User, MapPin } from "lucide-react";
 
 export default function OrderPage({ tableId }) {
   const [tableData, setTableData] = useState(null);
@@ -20,6 +22,8 @@ export default function OrderPage({ tableId }) {
   const [orderId, setOrderId] = useState(null);
   const [orderStatus, setOrderStatus] = useState(null);
   const [orderedItems, setOrderedItems] = useState([]);
+  const [orderCustomerName, setOrderCustomerName] = useState(""); // Nama pemesan dari order
+  const [orderTableNumber, setOrderTableNumber] = useState(""); // Nomor meja dari order
   const [pollingId, setPollingId] = useState(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
@@ -93,6 +97,9 @@ export default function OrderPage({ tableId }) {
 
         if (res.ok && data) {
           setOrderStatus(data.order_status);
+          setOrderCustomerName(data.cust_name || ""); // Ambil nama customer dari response
+          setOrderTableNumber(data.table_number || ""); // Ambil nomor meja dari response
+          
           const items = Object.entries(data.order_list).map(([id, quantity]) => {
             const menuItem = menus.find(m => m.id === id);
             return {
@@ -178,6 +185,8 @@ export default function OrderPage({ tableId }) {
       if (res.ok) {
         setSuccess(`Pesanan berhasil dikirim. ID: ${data.order.id}`);
         setOrderId(data.order.id);
+        setOrderCustomerName(customerName.trim()); // Set nama customer yang baru saja memesan
+        setOrderTableNumber(tableData.nomor); // Set nomor meja
         setCart([]);
         setCustomerName("");
         setActiveView("pesanan");
@@ -205,13 +214,12 @@ export default function OrderPage({ tableId }) {
     return menusByCategory;
   };
 
-  // Bottom Navigation for Mobile
-
   const renderOrderStatus = () => {
     if (!orderId) return (
       <div className="text-center py-8 text-gray-500">
         <Clock size={48} className="mx-auto mb-4 text-gray-300" />
         <p>Belum ada pesanan</p>
+        <p className="text-sm mt-2">Silakan pilih menu dan buat pesanan terlebih dahulu</p>
       </div>
     );
 
@@ -219,15 +227,15 @@ export default function OrderPage({ tableId }) {
     let statusColor = "";
     switch (orderStatus) {
       case 0: 
-        statusText = "Menunggu konfirmasi"; 
+        statusText = "Dipesan"; 
         statusColor = "text-yellow-600 bg-yellow-100";
         break;
       case 1: 
-        statusText = "Selesaikan pembayaran"; 
+        statusText = "Menunggu Pembayaran"; 
         statusColor = "text-orange-600 bg-orange-100";
         break;
       case 2: 
-        statusText = "Pesanan dikonfirmasi"; 
+        statusText = "Dibayar"; 
         statusColor = "text-blue-600 bg-blue-100";
         break;
       case 3: 
@@ -238,6 +246,10 @@ export default function OrderPage({ tableId }) {
         statusText = "Pesanan selesai"; 
         statusColor = "text-green-600 bg-green-100";
         break;
+      case 5: 
+        statusText = "Pesanan dibatalkan"; 
+        statusColor = "text-red-600 bg-red-100";
+        break;
       default: 
         statusText = "Status tidak diketahui"; 
         statusColor = "text-gray-600 bg-gray-100";
@@ -246,28 +258,79 @@ export default function OrderPage({ tableId }) {
 
     return (
       <div className="bg-white shadow-md rounded-lg p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Status Pesanan</h3>
-        <div className={`inline-block px-4 py-2 rounded-full font-semibold mb-4 ${statusColor}`}>
-          {statusText}
+        <h3 className="text-xl font-bold text-gray-800 mb-6">Status Pesanan</h3>
+        
+        {/* Info Pesanan */}
+        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-100 p-2 rounded-full">
+                <User size={16} className="text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Nama Pemesan</p>
+                <p className="font-semibold text-gray-800">{orderCustomerName || "Tidak tersedia"}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-green-100 p-2 rounded-full">
+                <MapPin size={16} className="text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Nomor Meja</p>
+                <p className="font-semibold text-gray-800">Meja {orderTableNumber || "Tidak tersedia"}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          {orderedItems.map((item) => (
-            <div key={item.id} className="flex justify-between items-center border-b pb-2">
+        {/* Status Badge */}
+        <div className="text-center mb-6">
+          <div className={`inline-block px-6 py-3 rounded-full font-semibold text-lg ${statusColor}`}>
+            {statusText}
+          </div>
+          <p className="text-sm text-gray-500 mt-2">ID Pesanan: #{orderId}</p>
+        </div>
+
+        {/* Detail Item Pesanan */}
+        <div className="space-y-3 mb-6">
+          <h4 className="font-semibold text-gray-800 mb-3">Detail Pesanan:</h4>
+          {orderedItems.map((item, index) => (
+            <div key={item.id || index} className="flex justify-between items-center border-b pb-3 last:border-b-0">
               <div className="flex items-center gap-3">
-                <img src={item.menu_img} alt={item.menu_name} className="w-12 h-12 object-cover rounded" />
+                <img 
+                  src={item.menu_img} 
+                  alt={item.menu_name} 
+                  className="w-12 h-12 object-cover rounded-lg" 
+                />
                 <div>
-                  <p className="font-medium">{item.menu_name}</p>
+                  <p className="font-medium text-gray-800">{item.menu_name}</p>
                   <p className="text-sm text-gray-500">x {item.quantity}</p>
                 </div>
               </div>
-              <span className="font-semibold">Rp {(item.quantity * parseInt(item.menu_price)).toLocaleString('id-ID')}</span>
+              <span className="font-semibold text-gray-800">
+                Rp {(item.quantity * parseInt(item.menu_price)).toLocaleString('id-ID')}
+              </span>
             </div>
           ))}
         </div>
 
-        <div className="mt-4 pt-4 border-t font-bold text-right text-green-700 text-lg">
-          Total: Rp {orderedItems.reduce((sum, i) => sum + i.quantity * parseInt(i.menu_price), 0).toLocaleString('id-ID')}
+        {/* Total Harga */}
+        <div className="border-t pt-4">
+          <div className="flex justify-between items-center font-bold text-lg">
+            <span className="text-gray-800">Total Pembayaran:</span>
+            <span className="text-green-700">
+              Rp {orderedItems.reduce((sum, i) => sum + i.quantity * parseInt(i.menu_price), 0).toLocaleString('id-ID')}
+            </span>
+          </div>
+        </div>
+
+        {/* Informasi Tambahan */}
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <strong>Info:</strong> Status pesanan akan diperbarui secara otomatis. 
+            {orderStatus < 4 && " Harap menunggu hingga pesanan selesai disiapkan."}
+          </p>
         </div>
       </div>
     );
@@ -325,9 +388,10 @@ export default function OrderPage({ tableId }) {
         <div className="text-center py-8 text-gray-500">
           <ShoppingCart size={48} className="mx-auto mb-4 text-gray-300" />
           <p>Keranjang belanja kosong</p>
+          <p className="text-sm mt-2">Silakan pilih menu dari halaman menu</p>
         </div>
       ) : (
-        <div onSubmit={handleSubmitOrder} className="space-y-6">
+        <div className="space-y-6">
           <div className="space-y-4">
             {cart.map(item => (
               <div key={item.id} className="flex items-center gap-4 border-b pb-4">
@@ -417,7 +481,15 @@ export default function OrderPage({ tableId }) {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar for Desktop/Mobile */}
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} activeView={activeView} setActiveView={setActiveView} categories={categories} activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        activeView={activeView} 
+        setActiveView={setActiveView} 
+        categories={categories} 
+        activeCategory={activeCategory} 
+        setActiveCategory={setActiveCategory} 
+      />
       
       {/* Overlay for mobile sidebar */}
       {isSidebarOpen && (

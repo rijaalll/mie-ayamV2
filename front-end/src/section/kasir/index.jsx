@@ -1,24 +1,22 @@
+// front-end/src/section/kasir/index.jsx
+
 "use client";
 import { useState, useEffect, useRef } from 'react';
-// Removed the problematic import for authContext
-import { useAuth } from '@/src/utils/authContext'; // This line caused the error
+import { useAuth } from '@/src/utils/authContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// Status mapping untuk order
 const ORDER_STATUS = {
-  0: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
-  1: { label: 'Confirmed', color: 'bg-blue-100 text-blue-800', icon: '✅' },
-  2: { label: 'Preparing', color: 'bg-orange-100 text-orange-800', icon: '🍳' },
-  3: { label: 'Ready', color: 'bg-green-100 text-green-800', icon: '🍽️' },
-  4: { label: 'Completed', color: 'bg-gray-100 text-gray-800', icon: '✔️' },
-  5: { label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: '❌' }
+  0: { label: 'Menunggu', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
+  1: { label: 'Konfirmasi', color: 'bg-blue-100 text-blue-800', icon: '✅' },
+  2: { label: 'Dibayar', color: 'bg-orange-100 text-orange-800', icon: '🍳' },
+  3: { label: 'Diproses', color: 'bg-green-100 text-green-800', icon: '🍽️' },
+  4: { label: 'Selesai', color: 'bg-gray-100 text-gray-800', icon: '✔️' },
+  5: { label: 'Batal', color: 'bg-red-100 text-red-800', icon: '❌' }
 };
 
 export default function App() {
-  const {user, logout} = useAuth(); // Mock user data
-
-
+  const {user, logout} = useAuth();
   const [orders, setOrders] = useState([]);
   const [menus, setMenus] = useState([]);
   const [loading, setLoading] = useState(true);

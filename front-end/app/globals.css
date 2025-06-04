@@ -7,3 +7,9 @@ button {
 * {
     @apply transition-all duration-300
 }
+
+button,
+p,
+span {
+    @apply will-change-transform
+}
