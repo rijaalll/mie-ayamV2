@@ -1,6 +1,15 @@
 # 🍜 Mie Hoog Restaurant Management System
 
 > *Sistem manajemen resto lengkap dengan Backend API, Frontend Dashboard, dan WhatsApp Bot!*
+
+## 👥 Contributors
+
+Aplikasi ini dikembangkan oleh:
+
+- **[Rizal](https://github.com/rijaalll)** - Full Stack Developer
+- **[Fanza](https://github.com/fnzadhitya)** - UI/UX Desain
+
+
 ### <a href="https://mie-hoog.rpnza.my.id">preview website</a>
 
 ## 🛠️ Tech Stack
