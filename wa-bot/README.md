@@ -174,15 +174,6 @@ admin.initializeApp({
 }
 ```
 
-## 🤝 Contributing
-
-Feel free buat contribute! Steps nya:
-1. Fork repo ini
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
-
 ## 📄 License
 
 Project ini pake MIT License. Check `LICENSE` file untuk detail lengkap.
