@@ -19,18 +19,6 @@ Frontend aplikasi Mie Hoog yang dibangun dengan Next.js dan React. Interface yan
 - 🖼️ **Image Upload**: Drag & drop image upload functionality
 - 🌙 **Dark/Light Mode**: Toggle between themes (opsional)
 
-## 🛠️ Tech Stack
-
-- **Next.js 14** - React framework dengan App Router
-- **React 18** - UI library
-- **Tailwind CSS** - Utility-first CSS framework
-- **Axios** - HTTP client untuk API calls
-- **React Hook Form** - Form handling dan validation
-- **React Query/SWR** - Data fetching dan caching
-- **Lucide React** - Beautiful icons
-- **React Hot Toast** - Elegant notifications
-- **Next/Image** - Optimized image handling
-
 ## 🏗️ Project Structure
 
 ```
