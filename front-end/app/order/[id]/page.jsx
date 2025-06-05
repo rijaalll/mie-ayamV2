@@ -45,9 +45,3 @@ export async function generateMetadata({ params }) {
         }
     };
 }
-
-export const openGraph = {
-    title: "Mie Hoog | Order",
-    description: "website pemesanan Mie Hoog",
-    images: "/images/web-logo-bg.JPG",
-};
