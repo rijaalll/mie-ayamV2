@@ -242,23 +242,6 @@ Lihat dokumentasi lengkap di `back-end/README.md`.
 - ✅ WhatsApp notifications
 - ✅ Responsive web interface
 
-### 🚧 Planned Features
-- 🔄 Print receipt functionality
-- 🔄 Inventory management
-- 🔄 Customer loyalty program
-- 🔄 Multiple restaurant branches
-- 🔄 Mobile app
-
-## 🤝 Contributing
-
-1. Fork repository ini
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## 📄 License
-
 Project ini menggunakan MIT License.
 
 ## 👥 Support
