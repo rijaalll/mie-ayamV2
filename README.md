@@ -1,7 +1,19 @@
 # 🍜 Mie Hoog Restaurant Management System
 
 > *Sistem manajemen resto lengkap dengan Backend API, Frontend Dashboard, dan WhatsApp Bot!*
-## <a href="https://mie-hoog.rpnza.my.id">preview</a>
+### <a href="https://mie-hoog.rpnza.my.id">preview website</a>
+
+## 🛠️ Tech Stack
+
+- **Next.js 14** - React framework dengan App Router
+- **React 18** - UI library
+- **Tailwind CSS** - Utility-first CSS framework
+- **Axios** - HTTP client untuk API calls
+- **React Hook Form** - Form handling dan validation
+- **React Query/SWR** - Data fetching dan caching
+- **Lucide React** - Beautiful icons
+- **React Hot Toast** - Elegant notifications
+- **Next/Image** - Optimized image handling
 
 ## 📖 Overview
 
