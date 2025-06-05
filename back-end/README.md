@@ -1,716 +1,382 @@
-# 🍜 Mie Hoog API - Dokumentasi Kece Abis! 
+# 🍜 Mie Hoog Backend API
 
-Yo! Ini API buat sistem mie hoog yang super mantul dan udah di-upgrade! ✨
+> *RESTful API yang canggih buat sistem manajemen resto Mie Hoog!*
 
-## 🚀 Base URL
+## 📖 Overview
+
+Ini adalah backend API untuk aplikasi Mie Hoog yang dibangun dengan Node.js dan Express. API ini handle semua operasi CRUD untuk menu, order, user management, kategori, meja, dan transaksi. Data disimpan di Firebase Realtime Database dengan struktur yang well-organized.
+
+### ✨ Key Features
+
+- 🔐 **User Authentication**: Login system untuk admin dan kasir
+- 🍽️ **Menu Management**: CRUD operations dengan image upload
+- 📋 **Order Processing**: Real-time order management system
+- 💰 **Transaction Tracking**: Complete transaction history
+- 🏷️ **Category System**: Organized menu categorization
+- 🪑 **Table Management**: Restaurant table allocation
+- 📤 **Image Upload**: External image hosting integration
+- 🔥 **Firebase Integration**: Real-time database synchronization
+
+## 🛠️ Tech Stack
+
+- **Node.js** - JavaScript runtime
+- **Express.js** - Web framework
+- **Firebase Admin SDK** - Database & authentication
+- **Axios** - HTTP client for external services
+- **Form-Data** - Multipart form handling
+- **Multer/Express-FileUpload** - File upload middleware
+
+## 🏗️ Project Structure
+
 ```
-http://localhost:3001/api/v1
+back-end/
+├── routes/
+│   └── v1/
+│       ├── kategori/kategori.js    # Category management
+│       ├── menu/menu.js            # Menu CRUD operations
+│       ├── order/order.js          # Order processing
+│       ├── table/table.js          # Table management
+│       ├── transaction/transaction.js # Transaction history
+│       └── user/user.js            # User authentication
+└── utils/
+    └── firebase.js                 # Firebase configuration
 ```
 
-## ⚡ Setup Gercep
+## 🚀 Getting Started
 
-1. Install dependencies dulu, bro:
-```bash
-npm install
+### Prerequisites
+
+- Node.js (v14 atau lebih baru)
+- Firebase project dengan Realtime Database
+- External image hosting service (opsional)
+
+### Installation
+
+1. **Clone dan setup project**
+   ```bash
+   git clone <repository-url>
+   cd back-end
+   npm install
+   ```
+
+2. **Configure Firebase**
+   - Setup Firebase Admin SDK credentials di `utils/firebase.js`
+   - Pastikan database rules sudah sesuai
+
+3. **Environment Setup**
+   ```bash
+   # Buat file .env (kalau diperlukan)
+   PORT=3000
+   IMAGE_UPLOAD_URL=http://image.rpnza.my.id/upload
+   ```
+
+4. **Run the server**
+   ```bash
+   npm start
+   ```
+
+## 📚 API Documentation
+
+### Base URL
+```
+http://localhost:3000/api/v1
 ```
 
-2. Bikin file `.env` yang kece:
-```
-API_PORT=3001
-```
+### 🏷️ Category Endpoints
 
-3. Gas start servernya:
-```bash
-node index.js
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/kategori/all` | Get all categories |
+| POST | `/kategori/add` | Add new category |
+| DELETE | `/kategori/:id` | Delete category |
 
-Kalau udah running, bakal keluar pesan: `Server running at http://localhost:3001` 🎉
-
----
-
-## 🎯 Endpoints Mantul
-
-### 🔥 Test API Connection
-
-#### GET /
-Cek aja API lu hidup apa engga
-
-**Response:**
+**Add Category Example:**
 ```json
+POST /kategori/add
 {
-  "status": "OK",
-  "message": {
-    "version": "1.0.0", 
-    "message": "API work cuy"
+  "name": "Mie Ayam"
+}
+```
+
+### 🍽️ Menu Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/menu/all` | Get all menus |
+| GET | `/menu/:id` | Get menu by ID |
+| POST | `/menu/add` | Add new menu (with image) |
+| POST | `/menu/update` | Update menu |
+| POST | `/menu/delete` | Delete menu |
+
+**Add Menu Example:**
+```json
+POST /menu/add
+Content-Type: multipart/form-data
+
+{
+  "menu_name": "Mie Ayam Special",
+  "menu_price": "25000",
+  "menu_des": "Mie ayam dengan topping lengkap",
+  "category": "Mie Ayam",
+  "user_id": "admin_user_id",
+  "file": [image_file]
+}
+```
+
+### 📋 Order Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/order/all` | Get all orders |
+| GET | `/order/id/:id` | Get order by ID |
+| GET | `/order/customer/:name` | Get orders by customer |
+| POST | `/order/add` | Create new order |
+| POST | `/order/update` | Update order status |
+| POST | `/order/delete` | Delete order |
+
+**Create Order Example:**
+```json
+POST /order/add
+{
+  "cust_name": "John Doe",
+  "table_number": "5",
+  "order_status": 1,
+  "order_list": {
+    "menu_001": 2,
+    "menu_002": 1
   }
 }
 ```
 
-Status: ✅ **200 OK** - API hidup dan sehat!
+### 🪑 Table Endpoints
 
----
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/table/all` | Get all tables |
+| GET | `/table/:id` | Get table by ID |
+| POST | `/table/add` | Add new table |
+| PUT | `/table/:id` | Update table |
+| DELETE | `/table/:id` | Delete table |
 
-### 👥 User Management (Admin & Kasir Only!)
+### 💰 Transaction Endpoints
 
-#### POST /user/add
-Daftarin user baru nih - **cuma admin & kasir doang yang bisa!**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/transaction/all` | Get all transactions |
+| GET | `/transaction/id/:id` | Get transaction by ID |
+| GET | `/transaction/customer/:name` | Get by customer |
+| GET | `/transaction/date/:day-:month-:year` | Get by date |
+| POST | `/transaction/add` | Create transaction |
+| POST | `/transaction/delete` | Delete transaction |
 
-**Request Body:**
+**Create Transaction Example:**
 ```json
+POST /transaction/add
 {
-  "name": "Joko Widodo",
-  "username": "jokowi",
-  "password": "password123",
-  "level": "admin" // wajib! pilih: "admin" atau "kasir"
-}
-```
-
-**Response Success (201):**
-```json
-{
-  "message": "User added",
-  "userId": "firebase_generated_key_ganteng"
-}
-```
-
-**Response Gagal (409) - Username udah ada:**
-```json
-{
-  "message": "Username already exists"
-}
-```
-
-**Response Error (400) - Data kurang:**
-```json
-{
-  "message": "Name, username, password, and level are required"
-}
-```
-
-#### GET /user/get/:id
-Ambil data user berdasarkan ID
-
-**Contoh:** `GET /user/get/abc123`
-
-**Response Success (200):**
-```json
-{
-  "id": "abc123",
-  "name": "Joko Widodo",
-  "username": "jokowi",
-  "password": "password123",
-  "level": "admin", 
-  "createdAt": 1640995200000
-}
-```
-
-#### GET /user/all
-Ambil semua data user (admin & kasir aja)
-
-**Response Success (200):**
-```json
-{
-  "status": "OK",
-  "users": [
+  "cust_name": "John Doe",
+  "order_total": 50000,
+  "order_menu": [
     {
-      "id": "abc123",
-      "name": "Joko Widodo",
-      "username": "jokowi",
-      "password": "password123",
-      "level": "admin",
-      "createdAt": 1640995200000
+      "nama": "Mie Ayam Special",
+      "harga": 25000,
+      "jumlah": 2,
+      "menu_img": "https://image.url/menu.jpg"
     }
   ]
 }
 ```
 
-#### POST /user/login  
-Login user - **cuma admin & kasir yang bisa masuk!**
+### 👤 User Endpoints
 
-**Request Body:**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/user/all` | Get all users |
+| GET | `/user/get/:id` | Get user by ID |
+| POST | `/user/add` | Add new user |
+| POST | `/user/login` | User authentication |
+| POST | `/user/update` | Update user |
+| POST | `/user/delete` | Delete user |
+
+**Login Example:**
 ```json
+POST /user/login
 {
-  "username": "jokowi",
+  "username": "admin",
   "password": "password123"
 }
 ```
 
-**Response Success (200):**
-```json
-{
-  "message": "Login successful",
-  "user": {
-    "id": "abc123",
-    "name": "Joko Widodo", 
-    "username": "jokowi",
-    "password": "password123",
-    "level": "admin",
-    "createdAt": 1640995200000
-  }
-}
-```
+## 🗄️ Database Structure
 
-**Response Gagal (401):**
-```json
-{
-  "message": "Invalid username or password, or insufficient privileges"
-}
-```
-
-#### POST /user/update
-Update data user
-
-**Request Body:**
-```json
-{
-  "id": "abc123",
-  "updates": {
-    "name": "Joko Widodo Baru",
-    "level": "kasir"
-  }
-}
-```
-
-#### POST /user/delete
-Hapus user
-
-**Request Body:**
-```json
-{
-  "id": "abc123"
-}
-```
-
----
-
-### 🍲 Menu Management (Yang Paling Seru!)
-
-#### POST /menu/add
-Tambahin menu baru - **ADMIN ONLY** nih bos! 
-
-**Content-Type:** `multipart/form-data`
-
-**Form Data:**
-- `menu_name`: "Mie Ayam Jumbo" 
-- `menu_price`: "25000"
-- `menu_des`: "Mie ayam porsi gede buat yang laper berat"
-- `category`: "Mie" (wajib, harus sesuai kategori yang ada!)
-- `user_id`: "admin_user_id" (wajib admin!)
-- `file`: [upload gambar menu yang kece]
-
-**Response Success (201):**
-```json
-{
-  "message": "Menu added successfully",
-  "menu": {
-    "id": "firebase_auto_key",
-    "menu_id": "menu_001", 
-    "menu_name": "Mie Ayam Jumbo",
-    "menu_price": "25000",
-    "menu_des": "Mie ayam porsi gede buat yang laper berat",
-    "menu_img": "https://image.rpnza.my.id/get/random123.jpg",
-    "category": "Mie",
-    "createdAt": 1640995200000
-  }
-}
-```
-
-**Response Ditolak (403) - Bukan admin:**
-```json
-{
-  "message": "Access denied. Admin only."
-}
-```
-
-#### GET /menu/all
-Ambil semua menu yang ada - ini yang paling sering dipake!
-
-**Response (200):**
-```json
-{
-  "status": "OK",
-  "all_menu": [
-    {
-      "id": "firebase_key1",
-      "menu_id": "menu_001",
-      "menu_name": "Mie Ayam Jumbo", 
-      "menu_price": "25000",
-      "menu_des": "Mie ayam porsi gede buat yang laper berat",
-      "menu_img": "https://image.rpnza.my.id/get/random123.jpg",
-      "category": "Mie",
-      "createdAt": 1640995200000
-    }
-  ]
-}
-```
-
-#### GET /menu/:id
-Ambil satu menu aja berdasarkan `menu_id`
-
-**Contoh:** `GET /menu/menu_001`
-
-#### POST /menu/delete
-Hapus menu - **ADMIN ONLY** juga nih!
-
-**Request Body:**
-```json
-{
-  "id": "firebase_key_menu_yang_mau_dihapus",
-  "user_id": "admin_user_id"
-}
-```
-
-#### POST /menu/update
-Update menu yang udah ada - **ADMIN ONLY** tentunya!
-
-**Content-Type:** `multipart/form-data`
-
-**Form Data (semua opsional kecuali id dan user_id):**
-- `id`: "firebase_key_menu" (wajib)
-- `user_id`: "admin_user_id" (wajib)  
-- `menu_name`: "Mie Ayam Super Jumbo" (opsional)
-- `menu_price`: "30000" (opsional)
-- `menu_des`: "Deskripsi baru yang kece" (opsional)
-- `file`: [gambar baru kalau mau ganti] (opsional)
-
----
-
-### 🛒 Order Management (Buat Customer Pesan!)
-
-#### POST /order/add
-Bikin pesanan baru - **semua orang bisa pesen nih!**
-
-**Request Body:**
-```json
-{
-  "cust_name": "Andi Keren",
-  "table_number": 5,
-  "order_status": 0,
-  "order_list": {
-    "firebase_menu_key1": 2,
-    "firebase_menu_key2": 1
-  }
-}
-```
-
-**Response Success (201):**
-```json
-{
-  "message": "Order created successfully",
-  "order": {
-    "id": "MH-firebase_key-Andi Keren",
-    "cust_name": "Andi Keren",
-    "table_number": 5,
-    "order_day": "03",
-    "order_month": "06", 
-    "order_year": "2025",
-    "order_status": 0,
-    "order_total": 65000,
-    "order_list": {
-      "firebase_menu_key1": 2,
-      "firebase_menu_key2": 1
-    },
-    "createdAt": 1640995200000
-  }
-}
-```
-
-#### GET /order/all
-Ambil semua pesanan
-
-#### GET /order/id/:id
-Ambil pesanan berdasarkan ID
-
-**Contoh:** `GET /order/id/MH-abc123-Andi`
-
-#### GET /order/customer/:cust_name
-Ambil pesanan berdasarkan nama customer
-
-**Contoh:** `GET /order/customer/Andi%20Keren`
-
-#### POST /order/update
-Update status pesanan
-
-**Request Body:**
-```json
-{
-  "id": "MH-abc123-Andi",
-  "updates": {
-    "order_status": 2
-  }
-}
-```
-
-#### POST /order/delete
-Hapus pesanan
-
-**Request Body:**
-```json
-{
-  "id": "MH-abc123-Andi"
-}
-```
-
----
-
-### 💰 Transaction Management (Riwayat Transaksi Kece!)
-
-#### POST /transaction/add
-Catat transaksi yang udah selesai
-
-**Request Body:**
-```json
-{
-  "cust_name": "Andi Keren",
-  "order_total": 65000,
-  "order_menu": [
-    {
-      "nama": "Mie Ayam Jumbo",
-      "harga": 25000,
-      "jumlah": 2,
-      "menu_img": "https://image.rpnza.my.id/get/abc123.jpg"
-    },
-    {
-      "nama": "Es Teh Manis",
-      "harga": 8000,
-      "jumlah": 2,
-      "menu_img": "https://image.rpnza.my.id/get/def456.jpg"
-    }
-  ]
-}
-```
-
-**Response Success (201):**
-```json
-{
-  "message": "Transaction created successfully",
-  "transaction": {
-    "id": "TXN-firebase_key-Andi Keren",
-    "cust_name": "Andi Keren",
-    "trans_day": "03",
-    "trans_month": "06",
-    "trans_year": "2025",
-    "trans_hour": "14",
-    "trans_minute": "30",
-    "trans_second": "45",
-    "order_total": 65000,
-    "order_menu": [...],
-    "createdAt": 1640995200000
-  }
-}
-```
-
-#### GET /transaction/all
-Ambil semua transaksi
-
-#### GET /transaction/id/:id
-Ambil transaksi berdasarkan ID
-
-#### GET /transaction/customer/:cust_name
-Ambil transaksi berdasarkan nama customer
-
-#### GET /transaction/date/:day-:month-:year
-Ambil transaksi berdasarkan tanggal
-
-**Contoh:** `GET /transaction/date/03-06-2025`
-
-#### POST /transaction/delete
-Hapus transaksi
-
----
-
-### 🏷️ Category Management (Kategori Menu!)
-
-#### GET /kategori/all
-Ambil semua kategori menu
-
-**Response (200):**
-```json
-{
-  "status": "OK",
-  "kategori": [
-    {
-      "id": "firebase_key1",
-      "name": "Mie"
-    },
-    {
-      "id": "firebase_key2", 
-      "name": "Minuman"
-    }
-  ]
-}
-```
-
-#### POST /kategori/add
-Tambahin kategori baru
-
-**Request Body:**
-```json
-{
-  "name": "Snack"
-}
-```
-
-#### DELETE /kategori/:id
-Hapus kategori
-
-**Contoh:** `DELETE /kategori/firebase_key1`
-
----
-
-### 🪑 Table Management (Ngatur Meja!)
-
-#### GET /table/all
-Ambil semua data meja
-
-**Response (200):**
-```json
-{
-  "status": "OK",
-  "tables": [
-    {
-      "id": "firebase_key1",
-      "nomor": 1
-    },
-    {
-      "id": "firebase_key2",
-      "nomor": 2
-    }
-  ]
-}
-```
-
-#### GET /table/:id
-Ambil data meja berdasarkan ID
-
-#### POST /table/add
-Tambahin meja baru
-
-**Request Body:**
-```json
-{
-  "nomor": 15
-}
-```
-
-#### PUT /table/:id
-Update nomor meja
-
-**Request Body:**
-```json
-{
-  "nomor": 16
-}
-```
-
-#### DELETE /table/:id
-Hapus meja
-
----
-
-## 🚨 Error Responses (Yang Sering Muncul)
-
-**400 - Bad Request:**
-```json
-{
-  "message": "Required field missing"
-}
-```
-
-**401 - Unauthorized:**
-```json
-{
-  "message": "Invalid username or password, or insufficient privileges"
-}
-```
-
-**403 - Forbidden:**
-```json
-{
-  "message": "Access denied. Admin only."
-}
-```
-
-**404 - Not Found:**
-```json
-{
-  "message": "Data not found"
-}
-```
-
-**409 - Conflict:**
-```json
-{
-  "message": "Username already exists"
-}
-```
-
-**500 - Internal Server Error:**
-```json
-{
-  "message": "Internal server error"
-}
-```
-
----
-
-## 👑 User Levels (Update!)
-
-- **`admin`**: Superuser - bisa ngapa-ngapain sesuka hati
-- **`kasir`**: Staff kasir - bisa login & akses tertentu
-
-⚠️ **PENTING:** Level `user` biasa udah dihapus! Sekarang cuma admin & kasir doang yang bisa login ke sistem.
-
----
-
-## 🎨 File Upload Info
-
-- **Format gambar:** JPG, PNG, GIF
-- **Upload service:** External server di `https://image.rpnza.my.id`  
-- **URL akses:** `https://image.rpnza.my.id/get/{filename}`
-- **Auto resize & optimize:** Udah otomatis kece!
-
----
-
-## 🗄️ Database Structure (Firebase Realtime Database)
+### Firebase Realtime Database Schema
 
 ```
 mie-hoog/
-├── user/ 
-│   └── {firebase_key}/
-│       ├── id: "firebase_key"
-│       ├── name: "Nama Lengkap"
-│       ├── username: "username_unik" 
-│       ├── password: "password123"
-│       ├── level: "admin" atau "kasir" (cuma 2 ini doang!)
-│       └── createdAt: 1640995200000
-├── menu/
-│   └── {category_name}/
-│       └── {firebase_key}/
-│           ├── id: "firebase_key"
-│           ├── menu_id: "menu_001" (auto increment)
-│           ├── menu_name: "Nama Menu Kece"
-│           ├── menu_price: "15000" (string)
-│           ├── menu_des: "Deskripsi yang menarik"
-│           ├── menu_img: "https://image.rpnza.my.id/get/abc123.jpg"
-│           ├── category: "Mie"
-│           └── createdAt: 1640995200000
 ├── category/
-│   └── {firebase_key}/
-│       └── name: "Mie"
-├── table/
-│   └── {firebase_key}/
-│       └── nomor: 1
+│   └── [auto-id]/
+│       └── name: "Category Name"
+├── menu/
+│   └── [category-name]/
+│       └── [auto-id]/
+│           ├── id: "firebase-key"
+│           ├── menu_id: "menu_001"
+│           ├── menu_name: "Menu Name"
+│           ├── menu_price: "price"
+│           ├── menu_des: "description"
+│           ├── menu_img: "image_url"
+│           ├── category: "category_name"
+│           └── createdAt: timestamp
 ├── order/
-│   └── {firebase_key}/
-│       ├── id: "MH-firebase_key-customer_name" 
-│       ├── cust_name: "Nama Customer"
-│       ├── order_day: "29" (tanggal)
-│       ├── order_month: "05" (bulan)
-│       ├── order_year: "2025" (tahun)
-│       ├── order_status: 1 (status pesanan)
-│       ├── order_total: 70000 (total harga)
-│       ├── table_number: 4 (nomor meja)
-│       ├── order_list: {
-│       │   "{menu_firebase_key}": 2, // quantity menu
-│       │   "{menu_firebase_key}": 1
-│       │ }
-│       └── createdAt: 1640995200000
-└── transaction/
-    └── {firebase_key}/
-        ├── id: "TXN-firebase_key-customer_name"
-        ├── cust_name: "Nama Customer"
-        ├── trans_day: "03"
-        ├── trans_month: "06"
-        ├── trans_year: "2025"
-        ├── trans_hour: "14"
-        ├── trans_minute: "30"
-        ├── trans_second: "45"
-        ├── order_total: 65000
-        ├── order_menu: [
-        │   {
-        │     "nama": "Menu Name",
-        │     "harga": 25000,
-        │     "jumlah": 2,
-        │     "menu_img": "https://..."
-        │   }
-        │ ]
-        └── createdAt: 1640995200000
+│   └── [auto-id]/
+│       ├── id: "MH-[key]-[customer]"
+│       ├── cust_name: "Customer Name"
+│       ├── table_number: "table_number"
+│       ├── order_day: "DD"
+│       ├── order_month: "MM"
+│       ├── order_year: "YYYY"
+│       ├── order_status: status_number
+│       ├── order_total: total_price
+│       ├── order_list: { "menu_id": quantity }
+│       └── createdAt: timestamp
+├── table/
+│   └── [auto-id]/
+│       └── nomor: "table_number"
+├── transaction/
+│   └── [auto-id]/
+│       ├── id: "TXN-[key]-[customer]"
+│       ├── cust_name: "Customer Name"
+│       ├── trans_day: "DD"
+│       ├── trans_month: "MM"
+│       ├── trans_year: "YYYY"
+│       ├── trans_hour: "HH"
+│       ├── trans_minute: "MM"
+│       ├── trans_second: "SS"
+│       ├── order_total: total_price
+│       ├── order_menu: [menu_array]
+│       └── createdAt: timestamp
+└── user/
+    └── [auto-id]/
+        ├── id: "firebase-key"
+        ├── name: "Full Name"
+        ├── username: "username"
+        ├── password: "password"
+        ├── level: "admin|kasir"
+        └── createdAt: timestamp
 ```
 
-### 📋 Order Status Codes:
-- **0**: Pending (Menunggu konfirmasi)
-- **1**: Confirmed (Dikonfirmasi) 
-- **2**: Preparing (Sedang dimasak)
-- **3**: Ready (Siap disajikan)
-- **4**: Completed (Selesai)
-- **5**: Cancelled (Dibatalkan)
+## 🔐 Authentication & Authorization
+
+### User Levels
+- **Admin**: Full access ke semua endpoints
+- **Kasir**: Limited access untuk operasional
+
+### Protected Endpoints
+- Menu: Add, Update, Delete (Admin only)
+- User: All operations (Admin access required)
+- Order: All operations (Admin/Kasir)
+- Transaction: All operations (Admin/Kasir)
+
+## 🖼️ Image Upload System
+
+API ini integrate dengan external image hosting service:
+
+```javascript
+// Upload endpoint
+POST http://image.rpnza.my.id/upload
+
+// Access uploaded image
+GET https://image.rpnza.my.id/get/{filename}
+```
+
+### Supported Formats
+- JPG, JPEG, PNG
+- Max file size: sesuai konfigurasi server
+
+## 📊 Order Status Codes
+
+| Status | Description |
+|--------|-------------|
+| 1 | Pending/Baru masuk |
+| 2 | Sedang dimasak |
+| 3 | Siap disajikan |
+| 4 | Selesai |
+| 5 | Dibatalkan |
+
+## 🔧 Error Handling
+
+API ini return consistent error responses:
+
+```json
+{
+  "message": "Error description",
+  "status": "error"
+}
+```
+
+### Common HTTP Status Codes
+- `200` - Success
+- `201` - Created
+- `400` - Bad Request
+- `401` - Unauthorized
+- `403` - Forbidden
+- `404` - Not Found
+- `409` - Conflict
+- `500` - Internal Server Error
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **Firebase Connection Error**
+   - Check service account credentials
+   - Verify database URL dan rules
+
+2. **Image Upload Failed**
+   - Check external image service availability
+   - Verify file format dan size
+
+3. **Authentication Failed**
+   - Pastiin user level sesuai (admin/kasir)
+   - Check username/password accuracy
+
+4. **Order Total Calculation Wrong**
+   - Verify menu prices di database
+   - Check order_list format
+
+## 🔄 Integration dengan WhatsApp Bot
+
+API ini terintegrasi dengan WhatsApp Bot untuk notifikasi:
+- Order status changes trigger WhatsApp notifications
+- Bot listen ke Firebase changes secara real-time
+- Automatic message formatting dengan order details
+
+## 📈 Performance Tips
+
+- Use Firebase indexing untuk query yang sering dipakai
+- Implement caching untuk menu data
+- Optimize image sizes sebelum upload
+- Monitor database read/write operations
+
+## 🤝 Contributing
+
+Mau contribute? Silakan:
+1. Fork repository
+2. Create feature branch
+3. Commit changes dengan clear message
+4. Submit Pull Request
+
+### Code Style
+- Use consistent indentation (2 spaces)
+- Follow RESTful API conventions
+- Add proper error handling
+- Include meaningful comments
+
+## 📄 License
+
+Project ini menggunakan MIT License.
 
 ---
 
-## 🔥 Fitur Baru yang Kece!
+*Built with ❤️ for Mie Hoog Restaurant Management System*
 
-### ✨ Yang Baru Ditambah:
-1. **Transaction System** - Catat semua transaksi yang udah selesai
-2. **Category Management** - Kelompok menu jadi lebih rapih
-3. **Table Management** - Ngatur meja restoran
-4. **External Image Upload** - Upload gambar ke server terpisah, lebih cepet!
-5. **Custom Order ID** - ID pesanan jadi unik: `MH-key-customer`
-6. **Custom Transaction ID** - ID transaksi: `TXN-key-customer`
-7. **Date Filter** - Cari transaksi berdasarkan tanggal
-8. **User Level Restriction** - Cuma admin & kasir yang bisa login
-
-### 🛠️ Yang Diperbaiki:
-- Menu sekarang dikelompok berdasarkan kategori di database
-- Upload gambar pake external service yang lebih handal
-- Auto-generate menu ID yang lebih konsisten
-- Validasi data yang lebih ketat
-- Error handling yang lebih detail
-
----
-
-## 💡 Tips Penggunaan Update!
-
-1. **Login wajib punya level admin/kasir** - customer gak bisa login!
-2. **Bikin kategori dulu** sebelum tambahin menu
-3. **Menu ID otomatis** jadi gak usah pusing
-4. **Order ID custom** biar gampang lacak pesanan
-5. **Transaction buat laporan** - catat yang udah selesai aja
-6. **Table management** - atur nomor meja sesuai resto lu
-7. **Image upload external** - gambar lebih cepet load!
-
----
-
-## 🚀 Flow Penggunaan Recommended:
-
-### Admin Setup:
-1. `POST /user/add` - Daftarin admin/kasir
-2. `POST /kategori/add` - Bikin kategori menu
-3. `POST /table/add` - Setup meja-meja
-4. `POST /menu/add` - Tambahin menu per kategori
-
-### Customer Flow:
-1. `GET /menu/all` - Liat semua menu
-2. `POST /order/add` - Pesan makanan
-3. `GET /order/id/:id` - Cek status pesanan
-
-### Kitchen/Kasir Flow:
-1. `POST /user/login` - Login dulu
-2. `GET /order/all` - Liat semua pesanan
-3. `POST /order/update` - Update status masak
-4. `POST /transaction/add` - Catat transaksi selesai
-
-### Reporting:
-1. `GET /transaction/all` - Laporan semua transaksi
-2. `GET /transaction/date/dd-mm-yyyy` - Laporan harian
-3. `GET /transaction/customer/:name` - Riwayat customer
-
----
-
-## 🎉 Penutup
-
-API ini udah makin mantul dengan fitur-fitur baru yang bikin sistem mie hoog lu jadi lebih profesional! Semua udah siap pakai buat aplikasi yang lebih canggih.
-
-**Selamat ngoding, bro! Semoga sistem lu makin kece! 🚀✨**
-
-> **Note:** Jangan lupa backup database secara berkala ya! Data customer itu penting banget! 💾
+**Ready to serve delicious APIs! 🚀**
