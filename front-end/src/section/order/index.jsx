@@ -3,7 +3,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Sidebar, BottomNav } from "./components";
-import { ShoppingCart, Home, Clock, Menu, X, User, MapPin } from "lucide-react";
+import { ShoppingCart, Home, Clock, Menu, X, User, MapPin, Phone } from "lucide-react";
 
 export default function OrderPage({ tableId }) {
   const [tableData, setTableData] = useState(null);
@@ -11,6 +11,7 @@ export default function OrderPage({ tableId }) {
   const [categories, setCategories] = useState([]);
   const [cart, setCart] = useState([]);
   const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [tableLoading, setTableLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,6 +24,7 @@ export default function OrderPage({ tableId }) {
   const [orderStatus, setOrderStatus] = useState(null);
   const [orderedItems, setOrderedItems] = useState([]);
   const [orderCustomerName, setOrderCustomerName] = useState(""); // Nama pemesan dari order
+  const [orderCustomerPhone, setOrderCustomerPhone] = useState(""); // Nomor WhatsApp dari order
   const [orderTableNumber, setOrderTableNumber] = useState(""); // Nomor meja dari order
   const [pollingId, setPollingId] = useState(null);
 
@@ -98,6 +100,7 @@ export default function OrderPage({ tableId }) {
         if (res.ok && data) {
           setOrderStatus(data.order_status);
           setOrderCustomerName(data.cust_name || ""); // Ambil nama customer dari response
+          setOrderCustomerPhone(data.telephone || ""); // Ambil nomor WhatsApp dari response
           setOrderTableNumber(data.table_number || ""); // Ambil nomor meja dari response
           
           const items = Object.entries(data.order_list).map(([id, quantity]) => {
@@ -144,13 +147,32 @@ export default function OrderPage({ tableId }) {
   const getTotalPrice = () =>
     cart.reduce((sum, item) => sum + parseInt(item.menu_price) * item.quantity, 0);
 
+  // Validasi format nomor WhatsApp
+  const validatePhoneNumber = (phone) => {
+    const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/;
+    return phoneRegex.test(phone);
+  };
+
   const handleSubmitOrder = async () => {
     setError("");
     setSuccess("");
     setLoading(true);
 
+    // Validasi input
     if (!customerName.trim()) {
       setError("Nama customer harus diisi");
+      setLoading(false);
+      return;
+    }
+
+    if (!customerPhone.trim()) {
+      setError("Nomor WhatsApp harus diisi");
+      setLoading(false);
+      return;
+    }
+
+    if (!validatePhoneNumber(customerPhone.trim())) {
+      setError("Format nomor WhatsApp tidak valid. Contoh: 081234567777");
       setLoading(false);
       return;
     }
@@ -169,6 +191,7 @@ export default function OrderPage({ tableId }) {
 
       const body = {
         cust_name: customerName.trim(),
+        telephone: customerPhone.trim(),
         table_number: tableData.nomor,
         order_status: 0,
         order_list: orderList
@@ -186,9 +209,11 @@ export default function OrderPage({ tableId }) {
         setSuccess(`Pesanan berhasil dikirim. ID: ${data.order.id}`);
         setOrderId(data.order.id);
         setOrderCustomerName(customerName.trim()); // Set nama customer yang baru saja memesan
+        setOrderCustomerPhone(customerPhone.trim()); // Set nomor WhatsApp customer
         setOrderTableNumber(tableData.nomor); // Set nomor meja
         setCart([]);
         setCustomerName("");
+        setCustomerPhone("");
         setActiveView("pesanan");
       } else {
         setError(data.message || "Gagal membuat pesanan");
@@ -262,7 +287,7 @@ export default function OrderPage({ tableId }) {
         
         {/* Info Pesanan */}
         <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center gap-3">
               <div className="bg-blue-100 p-2 rounded-full">
                 <User size={16} className="text-blue-600" />
@@ -274,7 +299,16 @@ export default function OrderPage({ tableId }) {
             </div>
             <div className="flex items-center gap-3">
               <div className="bg-green-100 p-2 rounded-full">
-                <MapPin size={16} className="text-green-600" />
+                <Phone size={16} className="text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">WhatsApp</p>
+                <p className="font-semibold text-gray-800">{orderCustomerPhone || "Tidak tersedia"}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-orange-100 p-2 rounded-full">
+                <MapPin size={16} className="text-orange-600" />
               </div>
               <div>
                 <p className="text-sm text-gray-600">Nomor Meja</p>
@@ -434,14 +468,38 @@ export default function OrderPage({ tableId }) {
               <span className="text-green-600">Rp {getTotalPrice().toLocaleString('id-ID')}</span>
             </div>
 
-            <input
-              type="text"
-              placeholder="Masukkan nama Anda"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              className="w-full border border-gray-300 px-4 py-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+            {/* Input Nama Customer */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nama Lengkap *
+              </label>
+              <input
+                type="text"
+                placeholder="Masukkan nama lengkap Anda"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            {/* Input Nomor WhatsApp */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nomor WhatsApp *
+              </label>
+              <input
+                type="tel"
+                placeholder="Contoh: 081234567777"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Format: 08xxxxxxxxxx atau +62xxxxxxxxx
+              </p>
+            </div>
 
             <button
               onClick={handleSubmitOrder}
@@ -495,7 +553,7 @@ export default function OrderPage({ tableId }) {
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
+          onClick={() => setIsSidebarClose(false)}
         ></div>
       )}
 

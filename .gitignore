@@ -46,3 +46,4 @@ front-end/.vercel
 front-end/*.tsbuildinfo
 front-end/next-env.d.ts
 
+wa-bot/
