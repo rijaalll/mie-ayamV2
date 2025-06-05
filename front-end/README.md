@@ -441,13 +441,6 @@ const MenuCard = ({ menu, onEdit, onDelete }) => {
 export default MenuCard;
 ```
 
-## 👥 Contributors
-
-Aplikasi ini dikembangkan oleh:
-
-- **[Your Name](https://github.com/yourusername)** - Full Stack Developer
-- **[Fanza](https://github.com/fanzausername)** - Full Stack Developer
-
 ## 📄 License
 
 Project ini menggunakan MIT License - lihat file [LICENSE](LICENSE) untuk details.
