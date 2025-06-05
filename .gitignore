@@ -1,7 +1,5 @@
 # BACK-END IGNORE
 back-end/node_modules/
-back-end/.env
-back-end/utils/
 
 # FRONT-END IGNORE
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
@@ -46,4 +44,5 @@ front-end/.vercel
 front-end/*.tsbuildinfo
 front-end/next-env.d.ts
 
-wa-bot/
+wa-bot/auth/
+wa-bot/node_modules/
