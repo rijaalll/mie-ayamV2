@@ -357,14 +357,6 @@ API ini terintegrasi dengan WhatsApp Bot untuk notifikasi:
 - Optimize image sizes sebelum upload
 - Monitor database read/write operations
 
-## 🤝 Contributing
-
-Mau contribute? Silakan:
-1. Fork repository
-2. Create feature branch
-3. Commit changes dengan clear message
-4. Submit Pull Request
-
 ### Code Style
 - Use consistent indentation (2 spaces)
 - Follow RESTful API conventions
